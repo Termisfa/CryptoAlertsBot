@@ -18,7 +18,6 @@ namespace CryptoAlertsBot.Helpers
         public static double StringPriceToDouble(string price, int maxLength = default)
         {
             price = price.Substring(0, maxLength);
-            price = price.Replace('.', ',');
 
             double priceDouble = double.Parse(price);
 
