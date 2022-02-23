@@ -94,5 +94,15 @@ namespace CryptoAlertsBot.ApiHandler
 
             return result;
         }
+
+        public static async Task<string> GetAlertsList(string userId)
+        {
+            string result = "Resumen de alertas actuales: \n";
+
+            var alerts = await BuildAndExeApiCall.GetWithOneArgument<Alerts>("userId", userId);
+
+
+            return result;
+        }
     }
 }

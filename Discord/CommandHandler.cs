@@ -23,6 +23,7 @@ namespace CryptoAlertsBot.Discord
 
             await _commands.AddModuleAsync<UserCommands>(null);
             await _commands.AddModuleAsync<CoinCommands>(null);
+            await _commands.AddModuleAsync<AlertCommands>(null);
         }
 
         private async Task HandleCommandAsync(SocketMessage messageParam)

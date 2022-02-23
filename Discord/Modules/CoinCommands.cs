@@ -2,7 +2,6 @@
 using CryptoAlertsBot.Models;
 using Discord;
 using Discord.Commands;
-using Discord.WebSocket;
 using static CryptoAlertsBot.Helpers.Helpers;
 
 namespace CryptoAlertsBot.Discord.Modules
@@ -64,22 +63,22 @@ namespace CryptoAlertsBot.Discord.Modules
             try
             {
                 coinChannelId = FormatChannelId(coinChannelId);
-                var channelCoin = Context.Guild.GetTextChannel(ulong.Parse(coinChannelId));
+                var coinChannel = Context.Guild.GetTextChannel(ulong.Parse(coinChannelId));
 
-                if(channelCoin == null)
+                if(coinChannel == null)
                 {
                     await ReplyAsync("Error, debe especificar el canal de la moneda");
                     return;
                 }
 
-                var listAlerts = await BuildAndExeApiCall.GetWithOneArgument<Alerts>("coinAddress", $"(select address from coins where idChannel = '{channelCoin.Id}')");
+                var listAlerts = await BuildAndExeApiCall.GetWithOneArgument<Alerts>("coinAddress", $"(select address from coins where idChannel = '{coinChannel.Id}')");
                 if(listAlerts.Count != 0)
                 {
                     await ReplyAsync("No se puede eliminar una moneda que tiene alertas activas de algún usuario");
                     return;
                 }
 
-                channelCoin.DeleteAsync();
+                coinChannel.DeleteAsync();
                 BuildAndExeApiCall.DeleteWithOneArgument("coins", "idChannel", coinChannelId);
 
                 await ReplyAsync($"Moneda eliminada con éxito");
