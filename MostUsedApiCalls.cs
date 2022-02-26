@@ -56,6 +56,19 @@ namespace CryptoAlertsBot.ApiHandler
             }
         }
 
+        public static async Task<int> DeleteAlert(string userId, string coinAddress, string priceUsd, string alertType)
+        {
+            Dictionary<string, string> parameters = new();
+            parameters.Add("userId", userId);
+            parameters.Add("coinAddress", coinAddress);
+            parameters.Add("priceUsd", priceUsd);
+            parameters.Add("alertType", alertType);
+
+            int result = await BuildAndExeApiCall.DeleteWithMultipleArguments("Alerts", parameters);
+
+            return result;
+        }
+
         public static async Task<string> GetConstantTextByName(string name)
         {
             var constants = await BuildAndExeApiCall.GetWithOneArgument<Constants>("name", name);
@@ -68,7 +81,6 @@ namespace CryptoAlertsBot.ApiHandler
 
             return constants[0].Text;
         }
-
 
         public static async Task<ResultPancakeSwapApi> GetFromPancakeSwapApi(string baseAddress, string coin)
         {
@@ -91,16 +103,6 @@ namespace CryptoAlertsBot.ApiHandler
                 Price = StringPriceToDouble(resultPancakeSwapApiPreParsed.data.price, priceLength),
                 Price_BNB = StringPriceToDouble(resultPancakeSwapApiPreParsed.data.price_BNB, priceLength + 3)
             };
-
-            return result;
-        }
-
-        public static async Task<string> GetAlertsList(string userId)
-        {
-            string result = "Resumen de alertas actuales: \n";
-
-            var alerts = await BuildAndExeApiCall.GetWithOneArgument<Alerts>("userId", userId);
-
 
             return result;
         }

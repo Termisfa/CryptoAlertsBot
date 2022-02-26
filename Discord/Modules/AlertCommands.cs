@@ -15,16 +15,16 @@ namespace CryptoAlertsBot.Discord.Modules
         {
             try
             {
-                if((await MostUsedApiCalls.GetUserById(Context.User.Id.ToString())) == default)
+                if ((await MostUsedApiCalls.GetUserById(Context.User.Id.ToString())) == default)
                 {
-                    ReplyAsync("Error, para añadir una alerta primero debes darte de alta con el comando `!nuevousuario`");
+                    _ = ReplyAsync("Error, para añadir una alerta primero debes darte de alta con el comando `!nuevousuario`");
                     return;
                 }
 
                 SocketTextChannel coinChannel = default;
+                bool wrongChannel;
 
                 coinChannelId = FormatChannelId(coinChannelId);
-                bool wrongChannel;
 
                 if (ulong.TryParse(coinChannelId, out ulong coinChannelUlong))
                 {
@@ -36,15 +36,14 @@ namespace CryptoAlertsBot.Discord.Modules
 
                 if (wrongChannel)
                 {
-                    ReplyAsync("Error, debe especificar el canal de la moneda");
+                    _ = ReplyAsync("Error, debe especificar el canal de la moneda");
                     return;
                 }
 
                 string parsedAlertType = AlertsHandler.GetAlertType(alertTypeWord);
                 if (parsedAlertType == default)
                 {
-                    string answer = AlertsHandler.GetMessageWrongAlertTypeWord(alertTypeWord);
-                    ReplyAsync(answer);
+                    _ = ReplyAsync(AlertsHandler.GetMessageWrongAlertTypeWord(alertTypeWord));
                     return;
                 }
 
@@ -62,20 +61,79 @@ namespace CryptoAlertsBot.Discord.Modules
 
                 _ = await BuildAndExeApiCall.Post("alerts", alert);
 
-                ReplyAsync("Alerta añadida con éxito");
+                _ = ReplyAsync("Alerta añadida con éxito");
                 CommonFunctionality.UpdateAlertsResume(Context);
-
             }
             catch (Exception e)
             {
-                await ReplyAsync("Ha ocurrido un error");
+                _ = await ReplyAsync("Ha ocurrido un error");
             }
         }
 
+        [Command("BORRARALERTA")]
+        [Alias("ALERTABORRAR", "DELETEALERT", "ALERTDELETE", "REMOVEALERT", "ALERTREMOVE")]
+        public async Task DeleteAlert(string coinChannelId, double price, string alertTypeWord)
+        {
+            try
+            {
+                SocketTextChannel coinChannel = default;
+                bool wrongChannel;
 
+                coinChannelId = FormatChannelId(coinChannelId);
 
+                if (ulong.TryParse(coinChannelId, out ulong coinChannelUlong))
+                {
+                    coinChannel = Context.Guild.GetTextChannel(coinChannelUlong);
+                    wrongChannel = coinChannel == null;
+                }
+                else
+                    wrongChannel = true;
 
-        //public async Task NewUser([Remainder][Summary("The text to echo")] string echo)
+                if (wrongChannel)
+                {
+                    _ = ReplyAsync("Error, debe especificar el canal de la moneda");
+                    return;
+                }
 
+                string parsedAlertType = AlertsHandler.GetAlertType(alertTypeWord);
+                if (parsedAlertType == default)
+                {
+                    _ = ReplyAsync(AlertsHandler.GetMessageWrongAlertTypeWord(alertTypeWord));
+                    return;
+                }
+
+                string pinnedMessage = (await coinChannel.GetPinnedMessagesAsync())?.FirstOrDefault()?.Content;
+
+                string coinAddress = pinnedMessage.Replace(await MostUsedApiCalls.GetConstantTextByName(ConstantsNames.URL_POOCOIN), "");
+
+                int deletedRows = await MostUsedApiCalls.DeleteAlert(Context.User.Id.ToString(), coinAddress, price.ToString(), parsedAlertType);
+
+                if (deletedRows == 0)
+                    _ = ReplyAsync("No se ha encontrado la alerta");
+                else
+                {
+                    _ = ReplyAsync("Alerta eliminada");
+                    CommonFunctionality.UpdateAlertsResume(Context);
+                }
+            }
+            catch (Exception e)
+            {
+                _ = await ReplyAsync("Ha ocurrido un error");
+            }
+        }
+
+        [Command("LISTALERTS")]
+        [Alias("ALERTSLIST", "ALERTASLISTAR", "LISTADOALERTAS", "LISTARALERTAS")]
+        public async Task ListAlerts()
+        {
+            try
+            {
+                _ = ReplyAsync(await CommonFunctionality.GetAlertsMsg(Context));
+            }
+            catch (Exception e)
+            {
+                _ = await ReplyAsync("Ha ocurrido un error");
+            }
+        }
     }
 }
