@@ -3,6 +3,7 @@ using CryptoAlertsBot.Discord;
 using CryptoAlertsBot.Discord.Modules;
 using Discord;
 using Discord.Commands;
+using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -12,50 +13,78 @@ public partial class Program
 {
 
     private DiscordSocketClient _client;
-    private CommandService _commands;
+    private InteractionService _commands;
     public static Task Main(string[] args) => new Program().MainAsync();
+
+    public async Task MainAsync(string[] args) { }
 
     private async Task MainAsync()
     {
-        _client = new DiscordSocketClient();
-
-        _client.Log += LogAsync;
-
-        //  You can assign your bot token to a string, and pass that in to connect.
-        //  This is, however, insecure, particularly if you plan to have your code hosted in a public repository.
-        var token = ConfigurationManager.AppSettings["DiscordKeyProduction"];
-
-        // Some alternative options would be to keep your token in an Environment Variable or a standalone file.
-        // var token = Environment.GetEnvironmentVariable("NameOfYourEnvironmentVariable");
-        // var token = File.ReadAllText("token.txt");
-        // var token = JsonConvert.DeserializeObject<AConfigurationClass>(File.ReadAllText("config.json")).Token;
-
-        _commands = new CommandService(new CommandServiceConfig
+        using (var services = ConfigureServices())
         {
-            // Again, log level:
-            LogLevel = LogSeverity.Info,
+            _client = services.GetRequiredService<DiscordSocketClient>();
+            _commands = services.GetRequiredService<InteractionService>();
 
-            // There's a few more properties you can set,
-            // for example, case-insensitive commands.
-            CaseSensitiveCommands = false,
-        });
+            _client.Log += LogAsync;
+            _commands.Log += LogAsync;
+            _client.Ready += ReadyAsync;
 
-        CommandHandler commandHandler = new(_client, _commands);
-        await commandHandler.SetupAsync();
+            await _client.LoginAsync(TokenType.Bot, ConfigurationManager.AppSettings["DiscordKeyProduction"]);
+            await _client.StartAsync();
 
-        await _client.LoginAsync(TokenType.Bot, token);
-        await _client.StartAsync();
+            await services.GetRequiredService<CommandHandler>().InitializeAsync();
 
-        // Block this task until the program is closed.
-        await Task.Delay(-1);
+            services.GetRequiredService<FillPricesDB>().Initialize();
 
 
+            await Task.Delay(-1);
+        }
+    }
+
+    private ServiceProvider ConfigureServices()
+    {
+        return new ServiceCollection()
+            .AddSingleton<DiscordSocketClient>()
+            .AddSingleton<ConstantsHandler>()
+            .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
+            .AddSingleton<CommandService>()
+            .AddSingleton<CommandHandler>()
+            .AddSingleton<FillPricesDB>()
+            .BuildServiceProvider();
+    }
+
+    private async Task ReadyAsync()
+    {
+        if (IsDebug())
+        {
+            System.Console.WriteLine($"In debug mode, adding commands to 923597608302297119...");
+            await _commands.RegisterCommandsToGuildAsync(923597608302297119);
+        }
+        else
+        {
+            // this method will add commands globally, but can take around an hour
+            await _commands.RegisterCommandsGloballyAsync(true);
+        }
+        Console.WriteLine($"Connected as -> [{_client.CurrentUser}] :)");
     }
 
     private Task LogAsync(LogMessage log)
     {
-        Logger.Log(log.ToString());
+        _ = Logger.Log(log.ToString());
         return Task.CompletedTask;
     }
+
+    static bool IsDebug()
+    {
+#if DEBUG
+        return true;
+#else
+                return false;
+#endif
+    }
 }
+
+
+
+
 

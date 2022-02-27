@@ -1,54 +1,59 @@
-﻿using CryptoAlertsBot.Discord.Modules;
-using Discord;
-using Discord.Commands;
+﻿using Discord;
+using Discord.Interactions;
 using Discord.WebSocket;
+using System.Reflection;
+using Discord.Commands;
 
 namespace CryptoAlertsBot.Discord
 {
     public class CommandHandler : ModuleBase<SocketCommandContext>
     {
         private readonly DiscordSocketClient _client;
-        private readonly CommandService _commands;
+        private readonly InteractionService _slashCommands;
+        private readonly CommandService _normalCommands;
+        private readonly IServiceProvider _services;
 
-        // Retrieve client and CommandService instance via ctor
-        public CommandHandler(DiscordSocketClient client, CommandService commands)
+        public CommandHandler(DiscordSocketClient client, InteractionService slashCommands, CommandService normalCommands, IServiceProvider services)
         {
-            _commands = commands;
             _client = client;
+            _slashCommands = slashCommands;
+            _normalCommands = normalCommands;
+            _services = services;
         }
 
-        public async Task SetupAsync()
+        public async Task InitializeAsync()
         {
-            _commands.CommandExecuted += OnCommandExecutedAsync;
+            await _slashCommands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
+            await _normalCommands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
 
-            _client.MessageReceived += HandleCommandAsync;
+            _client.InteractionCreated += HandleInteraction;
+            _client.MessageReceived += HandleMsgAsync;
 
-            await _commands.AddModuleAsync<UserCommands>(null);
-            await _commands.AddModuleAsync<CoinCommands>(null);
-            await _commands.AddModuleAsync<AlertCommands>(null);
-            await _commands.AddModuleAsync<AdminCommands>(null);
-            await _commands.AddModuleAsync<TestCommands>(null);
+            _slashCommands.SlashCommandExecuted += SlashCommandExecuted;
+            _normalCommands.CommandExecuted += NormalCommandExecuted;
         }
 
-        private async Task OnCommandExecutedAsync(Optional<CommandInfo> command, ICommandContext context, IResult result)
-        {
-            // We have access to the information of the command executed,
-            // the context of the command, and the result returned from the
-            // execution in this event.
 
-            // We can tell the user what went wrong
-            if (!string.IsNullOrEmpty(result?.ErrorReason))
+        private async Task HandleInteraction(SocketInteraction arg)
+        {
+            try
             {
-                await context.Channel.SendMessageAsync(result.ErrorReason);
-            }
+                var ctx = new SocketInteractionContext(_client, arg);
+                await _slashCommands.ExecuteCommandAsync(ctx, _services);
 
-            // ...or even log the result (the method used should fit into
-            // your existing log handler)
-            var commandName = command.IsSpecified ? command.Value.Name : "A command";
-            Logger.Log("CommandExecution", $"{commandName} was executed at {DateTime.UtcNow}.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+
+                if (arg.Type == InteractionType.ApplicationCommand)
+                {
+                    await arg.GetOriginalResponseAsync().ContinueWith(async (msg) => await msg.Result.DeleteAsync());
+                }
+            }
         }
 
-        private async Task HandleCommandAsync(SocketMessage messageParam)
+        private async Task HandleMsgAsync(SocketMessage messageParam)
         {
             //To remove pinned messages notifications
             if (messageParam.Type == MessageType.ChannelPinnedMessage)
@@ -61,24 +66,69 @@ namespace CryptoAlertsBot.Discord
             var message = messageParam as SocketUserMessage;
             if (message == null) return;
 
-            // Create a number to track where the prefix ends and the command begins
             int argPos = 0;
 
-            // Determine if the message is a command based on the prefix and make sure no bots trigger commands
             if (!(message.HasCharPrefix('!', ref argPos) ||
                 message.HasMentionPrefix(_client.CurrentUser, ref argPos)) ||
                 message.Author.IsBot)
                 return;
 
-            // Create a WebSocket-based command context based on the message
             var context = new SocketCommandContext(_client, message);
 
-            // Execute the command with the command context we just
-            // created, along with the service provider for precondition checks.
-            await _commands.ExecuteAsync(
+            await _normalCommands.ExecuteAsync(
                 context: context,
                 argPos: argPos,
-                services: null);
+                services: _services);
+        }
+
+        private async Task SlashCommandExecuted(SlashCommandInfo command, IInteractionContext context, global::Discord.Interactions.IResult result)
+        {
+            if (!result.IsSuccess)
+            {
+                switch (result.Error)
+                {
+                    case InteractionCommandError.UnmetPrecondition:
+                        _ = await context.Channel.SendMessageAsync(result.ErrorReason);
+                        break;
+                    case InteractionCommandError.UnknownCommand:
+                        break;
+                    case InteractionCommandError.BadArgs:
+                        break;
+                    case InteractionCommandError.Exception:
+                        break;
+                    case InteractionCommandError.Unsuccessful:
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+
+
+        private async Task NormalCommandExecuted(Optional<CommandInfo> command, ICommandContext context, global::Discord.Commands.IResult result)
+        {
+            {
+                if (!result.IsSuccess)
+                {
+                    switch (result.Error)
+                    {
+                        case CommandError.UnmetPrecondition:
+                            _ = await context.Channel.SendMessageAsync(result.ErrorReason);
+                            break;
+                        case CommandError.UnknownCommand:
+                            break;
+                        case CommandError.BadArgCount:
+                            break;
+                        case CommandError.Exception:
+                            break;
+                        case CommandError.Unsuccessful:
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
         }
     }
 }
