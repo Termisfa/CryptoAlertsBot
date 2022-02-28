@@ -65,7 +65,7 @@ namespace CryptoAlertsBot.Discord.Modules
         {
             try
             {
-                coinChannel = FormatChannelId(coinChannel);
+                coinChannel = FormatChannelIdToNumberFormat(coinChannel);
                 var channel = Context.Guild.GetTextChannel(ulong.Parse(coinChannel));
 
                 if (channel == null)

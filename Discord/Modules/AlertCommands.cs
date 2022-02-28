@@ -29,7 +29,7 @@ namespace CryptoAlertsBot.Discord.Modules
                 SocketTextChannel coinChannel = default;
                 bool wrongChannel;
 
-                coinChannelId = FormatChannelId(coinChannelId);
+                coinChannelId = FormatChannelIdToNumberFormat(coinChannelId);
 
                 if (ulong.TryParse(coinChannelId, out ulong coinChannelUlong))
                 {
@@ -83,7 +83,7 @@ namespace CryptoAlertsBot.Discord.Modules
                 SocketTextChannel coinChannel = default;
                 bool wrongChannel;
 
-                coinChannelId = FormatChannelId(coinChannelId);
+                coinChannelId = FormatChannelIdToNumberFormat(coinChannelId);
 
                 if (ulong.TryParse(coinChannelId, out ulong coinChannelUlong))
                 {

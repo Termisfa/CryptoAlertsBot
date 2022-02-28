@@ -32,6 +32,17 @@ namespace CryptoAlertsBot.AlertsTypes
             return result;
         }
 
+        public static string GetAlertSign(string alertWord)
+        {
+            if (IsValidWord<AlertsUpEnum>(alertWord))
+                return ">=";
+
+            if (IsValidWord<AlertsDownEnum>(alertWord))
+                return "<=";
+
+            return default;
+        }
+
         private static bool IsValidWord<T>(string alertTypeWord)
         {
             bool result = Enum.IsDefined(typeof(T), alertTypeWord);

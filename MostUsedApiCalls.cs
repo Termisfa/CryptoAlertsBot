@@ -56,6 +56,21 @@ namespace CryptoAlertsBot.ApiHandler
             }
         }
 
+        public static async Task<Coins> GetCoinByAddress(string address)
+        {
+            List<Coins> coins = await BuildAndExeApiCall.GetWithOneArgument<Coins>("address", address);
+
+            if (coins.Count == 1)
+                return coins[0];
+            else if (coins.Count == 0)
+                return default;
+            else
+            {
+                await Logger.Log("Error in GetCoinById. AddressProvided: " + address);
+                throw new Exception();
+            }
+        }
+
         public static async Task<int> DeleteAlert(string userId, string coinAddress, string priceUsd, string alertType)
         {
             Dictionary<string, string> parameters = new();
