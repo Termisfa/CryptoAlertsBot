@@ -44,7 +44,7 @@ namespace CryptoAlertsBot
 
                 Dictionary<string, string> parameters = new();
                 parameters.Add("coinAddress", coin.Address);
-                parameters.Add("priceDate", $"%(select max(priceDate) from prices where coinAddress = '{coin.Address}')");
+                parameters.Add("priceDate", $"$(select max(priceDate) from prices where coinAddress = '{coin.Address}')");
 
                 var previousPrice = (await BuildAndExeApiCall.GetWithMultipleArguments<Prices>(parameters)).FirstOrDefault();
 
@@ -94,9 +94,9 @@ namespace CryptoAlertsBot
         private async void CheckAlerts(Coins coin, double price)
         {
             Dictionary<string, string> arguments = new();
-            arguments.Add("coinAddress", "%address");
-            arguments.Add("userId", "%users.Id");
-            arguments.Add("active", "%true");
+            arguments.Add("coinAddress", coin.Address);
+            arguments.Add("userId", "$users.Id");
+            arguments.Add("active", "$true");
 
             var alertsUsersList = await BuildAndExeApiCall.GetWithMultipleArguments<AlertsUsers>(arguments, "alerts,users");
 
@@ -141,9 +141,14 @@ namespace CryptoAlertsBot
             if (alertsChannel == null)
                 throw new Exception($"El canal de alertas del usuario '{alertUser.User.Name}' no existe");
 
-            string trimmedPrice = price.ToString().Substring(0, int.Parse(_constantsHandler.GetConstant(ConstantsNames.PRICE_LENGTH)));
+            var priceLength = int.Parse(_constantsHandler.GetConstant(ConstantsNames.PRICE_LENGTH));
+            string trimmedPrice = price.ToString();
+            if(trimmedPrice.Length > priceLength)
+                trimmedPrice = trimmedPrice.Substring(0, priceLength);
 
-            _ = (alertsChannel as SocketTextChannel).SendMessageAsync($"<@{alertUser.Alert.UserId}> La moneda {Helpers.Helpers.FormatChannelIdToDiscordFormat(coinChannelId)} está en `{trimmedPrice}` USD");
+            string upOrDown = Enum.IsDefined(typeof(AlertsUpEnum), alertUser.Alert.AlertType) ? $"subido" : "bajado";
+
+            _ = (alertsChannel as SocketTextChannel).SendMessageAsync($"<@{alertUser.Alert.UserId}> La moneda {Helpers.Helpers.FormatChannelIdToDiscordFormat(coinChannelId)} ha {upOrDown} de {alertUser.Alert.PriceUsd}. Está en  `{trimmedPrice}` USD");
         }
     }
 }

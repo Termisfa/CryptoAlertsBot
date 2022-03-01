@@ -74,7 +74,7 @@ namespace CryptoAlertsBot.Discord.Modules
                     return;
                 }
 
-                var listAlerts = await BuildAndExeApiCall.GetWithOneArgument<Alerts>("coinAddress", $"%(select address from coins where idChannel = '{channel.Id}')");
+                var listAlerts = await BuildAndExeApiCall.GetWithOneArgument<Alerts>("coinAddress", $"$(select address from coins where idChannel = '{channel.Id}')");
                 if (listAlerts.Count != 0)
                 {
                     await RespondAsync("No se puede eliminar una moneda que tiene alertas activas de algún usuario");

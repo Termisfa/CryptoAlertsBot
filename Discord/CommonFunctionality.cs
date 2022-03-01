@@ -37,7 +37,7 @@ namespace CryptoAlertsBot.Discord
         public static async Task<string> GetAlertsMsg(SocketInteractionContext context)
         {
             Dictionary<string, string> arguments = new();
-            arguments.Add("coinAddress", "%address");
+            arguments.Add("coinAddress", "$address");
             arguments.Add("userId", context.User.Id.ToString());
 
             var queryResult = await BuildAndExeApiCall.GetWithMultipleArguments<AlertsCoins>(arguments, "alerts,coins");
@@ -88,7 +88,10 @@ namespace CryptoAlertsBot.Discord
         {
             int priceLength = int.Parse(await MostUsedApiCalls.GetConstantTextByName(ConstantsNames.PRICE_LENGTH));
 
-            string result = price.ToString().Substring(0, priceLength);
+            string result = price.ToString();
+            if(result.Length > priceLength)
+                result = result.Substring(0, priceLength);
+
             return result;
         }
     }
