@@ -1,5 +1,6 @@
 ﻿using CryptoAlertsBot.AlertsTypes;
 using CryptoAlertsBot.ApiHandler;
+using CryptoAlertsBot.Discord.Preconditions;
 using CryptoAlertsBot.Models;
 using Discord.Interactions;
 using Discord.WebSocket;
@@ -7,6 +8,7 @@ using static CryptoAlertsBot.Helpers.Helpers;
 
 namespace CryptoAlertsBot.Discord.Modules
 {
+    
     public class AlertCommands : InteractionModuleBase<SocketInteractionContext>
     {
         private readonly ConstantsHandler _constantsHandler;
@@ -14,9 +16,13 @@ namespace CryptoAlertsBot.Discord.Modules
         {
             _constantsHandler = constantsHandler;
         }
-
-        [SlashCommand("alertanueva", "Añade una nueva alerta")]
-        public async Task NewAlert(string coinChannelId, double price, string alertTypeWord)
+        
+        [SlashCommand("nuevaalerta", "Añade una nueva alerta")]
+        public async Task NewAlert(
+            [Summary("Canal", "Canal de la moneda. Ejemplo: #WBNB")][IsCoinChannel] SocketTextChannel coinChannel,
+            [Summary("Precio", "Precio en USD para la alerta. Ejemplo: 1.23")] string priceString,
+            [Summary("Tipo", "Tipo de la alerta")] AlertsEnum alertType
+            )
         {
             try
             {
@@ -26,29 +32,9 @@ namespace CryptoAlertsBot.Discord.Modules
                     return;
                 }
 
-                SocketTextChannel coinChannel = default;
-                bool wrongChannel;
-
-                coinChannelId = FormatChannelIdToNumberFormat(coinChannelId);
-
-                if (ulong.TryParse(coinChannelId, out ulong coinChannelUlong))
+                if (!double.TryParse(priceString.Replace('.', ','), out double price))
                 {
-                    coinChannel = Context.Guild.GetTextChannel(coinChannelUlong);
-                    wrongChannel = coinChannel == null;
-                }
-                else
-                    wrongChannel = true;
-
-                if (wrongChannel)
-                {
-                    await RespondAsync("Error, debe especificar el canal de la moneda");
-                    return;
-                }
-
-                string parsedAlertType = AlertsHandler.GetAlertType(alertTypeWord);
-                if (parsedAlertType == default)
-                {
-                    await RespondAsync(AlertsHandler.GetMessageWrongAlertTypeWord(alertTypeWord));
+                    await RespondAsync($"Error, el precio `{priceString}` no es válido");
                     return;
                 }
 
@@ -61,7 +47,7 @@ namespace CryptoAlertsBot.Discord.Modules
                     UserId = Context.User.Id.ToString(),
                     CoinAddress = coinAddress,
                     PriceUsd = price,
-                    AlertType = parsedAlertType
+                    AlertType = alertType.ToString()
                 };
 
                 _ = await BuildAndExeApiCall.Post("alerts", alert);
@@ -76,33 +62,17 @@ namespace CryptoAlertsBot.Discord.Modules
         }
 
         [SlashCommand("borraralerta", "Elimina una alerta existente")]
-        public async Task DeleteAlert(string coinChannelId, double price, string alertTypeWord)
+        public async Task DeleteAlert(
+            [Summary("Canal", "Canal de la moneda. Ejemplo: #WBNB")][IsCoinChannel] SocketTextChannel coinChannel,
+            [Summary("Precio", "Precio en USD para la alerta. Ejemplo: 1.23")] string priceString,
+            [Summary("Tipo", "Tipo de la alerta")] AlertsEnum alertType
+            )
         {
             try
             {
-                SocketTextChannel coinChannel = default;
-                bool wrongChannel;
-
-                coinChannelId = FormatChannelIdToNumberFormat(coinChannelId);
-
-                if (ulong.TryParse(coinChannelId, out ulong coinChannelUlong))
+                if (!double.TryParse(priceString.Replace('.', ','), out double price))
                 {
-                    coinChannel = Context.Guild.GetTextChannel(coinChannelUlong);
-                    wrongChannel = coinChannel == null;
-                }
-                else
-                    wrongChannel = true;
-
-                if (wrongChannel)
-                {
-                    await RespondAsync("Error, debe especificar el canal de la moneda");
-                    return;
-                }
-
-                string parsedAlertType = AlertsHandler.GetAlertType(alertTypeWord);
-                if (parsedAlertType == default)
-                {
-                    await RespondAsync(AlertsHandler.GetMessageWrongAlertTypeWord(alertTypeWord));
+                    await RespondAsync($"Error, el precio `{priceString}` no es válido");
                     return;
                 }
 
@@ -110,7 +80,7 @@ namespace CryptoAlertsBot.Discord.Modules
 
                 string coinAddress = pinnedMessage.Replace(_constantsHandler.GetConstant(ConstantsNames.URL_POOCOIN), "");
 
-                int deletedRows = await MostUsedApiCalls.DeleteAlert(Context.User.Id.ToString(), coinAddress, price.ToString(), parsedAlertType);
+                int deletedRows = await MostUsedApiCalls.DeleteAlert(Context.User.Id.ToString(), coinAddress, price.ToString(), alertType.ToString());
 
                 if (deletedRows == 0)
                     await RespondAsync("No se ha encontrado la alerta");

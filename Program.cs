@@ -4,6 +4,7 @@ using CryptoAlertsBot.Discord.Modules;
 using Discord;
 using Discord.Commands;
 using Discord.Interactions;
+using Discord.Net;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -67,6 +68,7 @@ public partial class Program
         Console.WriteLine($"Connected as -> [{_client.CurrentUser}] :)");
 
         _services.GetRequiredService<FillPricesDB>().Initialize();
+
     }
 
     private Task LogAsync(LogMessage log)

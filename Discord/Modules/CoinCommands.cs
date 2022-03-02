@@ -1,7 +1,10 @@
-﻿using CryptoAlertsBot.ApiHandler;
+﻿using CryptoAlertsBot.AlertsTypes;
+using CryptoAlertsBot.ApiHandler;
+using CryptoAlertsBot.Discord.Preconditions;
 using CryptoAlertsBot.Models;
 using Discord;
 using Discord.Interactions;
+using Discord.WebSocket;
 using static CryptoAlertsBot.Helpers.Helpers;
 
 namespace CryptoAlertsBot.Discord.Modules
@@ -16,7 +19,9 @@ namespace CryptoAlertsBot.Discord.Modules
         }
 
         [SlashCommand("nuevamoneda", "Añade una nueva moneda. Introducir la address")]
-        public async Task NewCoin(string coinAddress)
+        public async Task NewCoin(
+            [Summary("Address", "Dirección de la moneda. Ejemplo: 0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c")] string coinAddress
+            )
         {
             try
             {
@@ -61,28 +66,21 @@ namespace CryptoAlertsBot.Discord.Modules
         }
 
         [SlashCommand("olvidarmoneda", "Elimina una moneda. Especificar el canal")]
-        public async Task DeleteCoin(string coinChannel)
+        public async Task DeleteCoin(
+            [Summary("Canal", "Canal de la moneda. Ejemplo: #WBNB")][IsCoinChannel] SocketTextChannel coinChannel
+            )
         {
             try
             {
-                coinChannel = FormatChannelIdToNumberFormat(coinChannel);
-                var channel = Context.Guild.GetTextChannel(ulong.Parse(coinChannel));
-
-                if (channel == null)
-                {
-                    await RespondAsync("Error, debe especificar el canal de la moneda");
-                    return;
-                }
-
-                var listAlerts = await BuildAndExeApiCall.GetWithOneArgument<Alerts>("coinAddress", $"$(select address from coins where idChannel = '{channel.Id}')");
+                var listAlerts = await BuildAndExeApiCall.GetWithOneArgument<Alerts>("coinAddress", $"$(select address from coins where idChannel = '{coinChannel.Id}')");
                 if (listAlerts.Count != 0)
                 {
                     await RespondAsync("No se puede eliminar una moneda que tiene alertas activas de algún usuario");
                     return;
                 }
 
-                _ = channel.DeleteAsync();
-                _ = BuildAndExeApiCall.DeleteWithOneArgument("coins", "idChannel", coinChannel);
+                _ = coinChannel.DeleteAsync();
+                _ = BuildAndExeApiCall.DeleteWithOneArgument("coins", "idChannel", coinChannel.Id.ToString());
 
                 await RespondAsync($"Moneda eliminada con éxito");
             }

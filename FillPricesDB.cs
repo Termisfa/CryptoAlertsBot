@@ -57,7 +57,7 @@ namespace CryptoAlertsBot
                 {
                     CoinAddress = coin.Address,
                     PriceUsd = coinInfo.Price,
-                    PriceDate = coinInfo.Updated_at
+                    PriceDate = coinInfo.Updated_at,
                 };
 
                 _ = BuildAndExeApiCall.Post("prices", price);
@@ -102,7 +102,7 @@ namespace CryptoAlertsBot
 
             foreach (var alertUser in alertsUsersList)
             {
-                if (Helpers.Helpers.IsGreaterOrLesserHandler(AlertsHandler.GetAlertSign(alertUser.Alert.AlertType), alertUser.Alert.PriceUsd, price))
+                if (Helpers.Helpers.IsGreaterOrLesserHandler(AlertsHelper.GetAlertSign(alertUser.Alert.AlertType), price, alertUser.Alert.PriceUsd))
                 {
                     if(alertUser.Alert.LastAlert == null)
                         _ = NotifyAlert(alertUser, price, coin.IdChannel);
@@ -116,7 +116,7 @@ namespace CryptoAlertsBot
 
                             foreach (var priceRow in prices)
                             {
-                                if (Helpers.Helpers.IsGreaterOrLesserHandler(AlertsHandler.GetAlertSign(alertUser.Alert.AlertType), alertUser.Alert.PriceUsd, priceRow.PriceUsd))
+                                if (Helpers.Helpers.IsGreaterOrLesserHandler(AlertsHelper.GetAlertSign(alertUser.Alert.AlertType), alertUser.Alert.PriceUsd, priceRow.PriceUsd))
                                 {
                                     await NotifyAlert(alertUser, price, coin.IdChannel);
                                     break;
@@ -128,7 +128,7 @@ namespace CryptoAlertsBot
             }
         }
 
-        private async Task NotifyAlert(AlertsUsers alertUser, double price, string coinChannelId)
+        private Task NotifyAlert(AlertsUsers alertUser, double price, string coinChannelId)
         {
             alertUser.Alert.LastAlert = DateTime.Now;
             _ = BuildAndExeApiCall.PutWithOneArgument("alerts", alertUser.Alert, "id", alertUser.Alert.Id.ToString());
@@ -146,9 +146,10 @@ namespace CryptoAlertsBot
             if(trimmedPrice.Length > priceLength)
                 trimmedPrice = trimmedPrice.Substring(0, priceLength);
 
-            string upOrDown = Enum.IsDefined(typeof(AlertsUpEnum), alertUser.Alert.AlertType) ? $"subido" : "bajado";
+            string upOrDown = alertUser.Alert.AlertType == AlertsEnum.Sube.ToString() ? $"subido" : "bajado";
 
-            _ = (alertsChannel as SocketTextChannel).SendMessageAsync($"<@{alertUser.Alert.UserId}> La moneda {Helpers.Helpers.FormatChannelIdToDiscordFormat(coinChannelId)} ha {upOrDown} de {alertUser.Alert.PriceUsd}. Está en  `{trimmedPrice}` USD");
+            _ = (alertsChannel as SocketTextChannel).SendMessageAsync($"<@{alertUser.Alert.UserId}> La moneda {Helpers.Helpers.FormatChannelIdToDiscordFormat(coinChannelId)} ha {upOrDown} de `{alertUser.Alert.PriceUsd}`. Está en  `{trimmedPrice}` USD");
+            return Task.CompletedTask;
         }
     }
 }
