@@ -83,52 +83,39 @@ namespace CryptoAlertsBot.Discord
 
         private async Task SlashCommandExecuted(SlashCommandInfo command, IInteractionContext context, global::Discord.Interactions.IResult result)
         {
-            if (!result.IsSuccess)
-            {
-                switch (result.Error)
-                {
-                    case InteractionCommandError.UnmetPrecondition:
-                        _ = await context.Channel.SendMessageAsync(result.ErrorReason);
-                        break;
-                    case InteractionCommandError.UnknownCommand:
-                        break;
-                    case InteractionCommandError.BadArgs:
-                        break;
-                    case InteractionCommandError.Exception:
-                        break;
-                    case InteractionCommandError.Unsuccessful:
-                        break;
-                    default:
-                        break;
-                }
-            }
+            await CommandExecutedAsync(context, result);
         }
-
-
 
         private async Task NormalCommandExecuted(Optional<CommandInfo> command, ICommandContext context, global::Discord.Commands.IResult result)
         {
+            await CommandExecutedAsync(context, result);
+        }
+
+        private async Task CommandExecutedAsync(dynamic context, dynamic result)
+        {
+            if (!result.IsSuccess)
             {
-                if (!result.IsSuccess)
+                string errorMsg;
+                switch (result.Error)
                 {
-                    switch (result.Error)
-                    {
-                        case CommandError.UnmetPrecondition:
-                            _ = await context.Channel.SendMessageAsync(result.ErrorReason);
-                            break;
-                        case CommandError.UnknownCommand:
-                            break;
-                        case CommandError.BadArgCount:
-                            break;
-                        case CommandError.Exception:
-                            break;
-                        case CommandError.Unsuccessful:
-                            break;
-                        default:
-                            break;
-                    }
+                    case CommandError.UnknownCommand:
+                    case InteractionCommandError.UnknownCommand:
+                        errorMsg = "Ese comando no existe";
+                        break;
+
+                    case CommandError.BadArgCount:
+                    case InteractionCommandError.BadArgs:
+                        errorMsg = "Número erróneo de parámetros";
+                        break;
+
+                    default:
+                        errorMsg = result.ErrorReason;
+                        break;
                 }
+
+                _ = await context.Channel.SendMessageAsync(errorMsg);
             }
         }
     }
 }
+

@@ -20,7 +20,7 @@ namespace CryptoAlertsBot.Discord.Modules
 
         [Command("CLEAR")]
         [Alias("BORRAR")]
-        public async Task Clear(int amount)
+        public async Task Clear(int amount = 100)
         {
             try
             {

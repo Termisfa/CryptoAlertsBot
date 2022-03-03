@@ -7,9 +7,7 @@ namespace CryptoAlertsBot.Discord.Preconditions
 {
     public class IsCoinChannelAttribute : ParameterPreconditionAttribute
     {
-        public IsCoinChannelAttribute()
-        {
-        }
+        public IsCoinChannelAttribute() { }
 
         public override async Task<PreconditionResult> CheckRequirementsAsync(IInteractionContext context, IParameterInfo parameter, object value, IServiceProvider services)
         {
@@ -19,7 +17,7 @@ namespace CryptoAlertsBot.Discord.Preconditions
             {
                 string adminCategoryId = await MostUsedApiCalls.GetConstantTextByName(ConstantsNames.DB_CATEGORY_CHANNEL_ID);
 
-                if(ulong.Parse(adminCategoryId) == channelCategoryId)
+                if (ulong.Parse(adminCategoryId) == channelCategoryId)
                     return PreconditionResult.FromSuccess();
                 else
                     return PreconditionResult.FromError($"El canal introducido debe ser una moneda.");
@@ -28,6 +26,6 @@ namespace CryptoAlertsBot.Discord.Preconditions
                 return PreconditionResult.FromError("You must be in a guild to run this command.");
         }
 
-        
+
     }
 }
