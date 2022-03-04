@@ -6,19 +6,6 @@ namespace CryptoAlertsBot.ApiHandler
 {
     public static class MostUsedApiCalls
     {
-        public static async Task<Users> GetUserByIdForcingOne(string userId)
-        {
-            List<Users> users = await BuildAndExeApiCall.GetWithOneArgument<Users>("id", userId);
-
-            if (users.Count != 1)
-            {
-                await Logger.Log("Error in GetUserById. UserIdProvided: " + userId);
-                throw new Exception();
-            }
-
-            return users[0];
-        }
-
         public static async Task<Users> GetUserById(string userId)
         {
             List<Users> users = await BuildAndExeApiCall.GetWithOneArgument<Users>("id", userId);
@@ -29,8 +16,7 @@ namespace CryptoAlertsBot.ApiHandler
                 return default;
             else
             {
-                await Logger.Log("Error in GetUserById. UserIdProvided: " + userId);
-                throw new Exception();
+                throw new Exception("Error in GetUserById. UserIdProvided: " + userId);
             }
         }
 
@@ -40,8 +26,7 @@ namespace CryptoAlertsBot.ApiHandler
 
             if (affectedRows != 1)
             {
-                await Logger.Log("Error in UpdateUserById. UserIdProvided: " + userId);
-                throw new Exception();
+                throw new Exception("Error in UpdateUserById. UserIdProvided: " + userId);
             }
         }
 
@@ -51,8 +36,7 @@ namespace CryptoAlertsBot.ApiHandler
 
             if (affectedRows != 1)
             {
-                await Logger.Log("Error in DeleteUserById. UserIdProvided: " + userId);
-                throw new Exception();
+                throw new Exception("Error in DeleteUserById. UserIdProvided: " + userId);
             }
         }
 
@@ -66,8 +50,7 @@ namespace CryptoAlertsBot.ApiHandler
                 return default;
             else
             {
-                await Logger.Log("Error in GetCoinById. AddressProvided: " + address);
-                throw new Exception();
+                throw new Exception("Error in GetCoinById. AddressProvided: " + address);
             }
         }
 
@@ -90,8 +73,7 @@ namespace CryptoAlertsBot.ApiHandler
 
             if (constants.Count != 1)
             {
-                await Logger.Log("Error in GetConstantByName. Name provided: " + name);
-                throw new Exception();
+                throw new Exception("Error in GetConstantByName. Name provided: " + name);
             }
 
             return constants[0].Text;

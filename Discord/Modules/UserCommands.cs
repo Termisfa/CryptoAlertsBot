@@ -9,6 +9,13 @@ namespace CryptoAlertsBot.Discord.Modules
 {
     public class UserCommands : InteractionModuleBase<SocketInteractionContext>
     {
+        private readonly Logger _logger;
+
+        public UserCommands(Logger logger)
+        {
+            _logger = logger;
+        }
+
         [SlashCommand("nuevousuario", "Es necesario para utilizar las alertas")]
         public async Task NewUser()
         {
@@ -57,7 +64,8 @@ namespace CryptoAlertsBot.Discord.Modules
             }
             catch (Exception e)
             {
-                await RespondAsync("Ha ocurrido un error");
+                _ = RespondAsync("Ha ocurrido un error");
+                _ = _logger.Log(exception: e);
             }
         }
 
@@ -82,7 +90,8 @@ namespace CryptoAlertsBot.Discord.Modules
             }
             catch (Exception e)
             {
-                await RespondAsync("Ha ocurrido un error");
+                _ = RespondAsync("Ha ocurrido un error");
+                _ = _logger.Log(exception: e);
             }
         }
 

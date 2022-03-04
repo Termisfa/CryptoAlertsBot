@@ -31,7 +31,7 @@ public partial class Program
             _commands.Log += LogAsync;
             _client.Ready += ReadyAsync;
 
-            await _client.LoginAsync(TokenType.Bot, ConfigurationManager.AppSettings["DiscordKeyProduction"]);
+            await _client.LoginAsync(TokenType.Bot, AppSettingsManager.GetDiscordBotKey());
             await _client.StartAsync();
 
             await _services.GetRequiredService<CommandHandler>().InitializeAsync();
@@ -50,6 +50,7 @@ public partial class Program
             .AddSingleton<CommandService>()
             .AddSingleton<CommandHandler>()
             .AddSingleton<FillPricesDB>()
+            .AddSingleton<Logger>()
             .BuildServiceProvider();
     }
 
@@ -58,7 +59,7 @@ public partial class Program
         if (IsDebug())
         {
             System.Console.WriteLine($"In debug mode, adding commands to 923597608302297119...");
-            await _commands.RegisterCommandsToGuildAsync(923597608302297119);
+            await _commands.RegisterCommandsToGuildAsync(ulong.Parse(AppSettingsManager.GetCryptoAllertsDiscordServerId()));
         }
         else
         {
@@ -71,10 +72,9 @@ public partial class Program
 
     }
 
-    private Task LogAsync(LogMessage log)
+    private async Task LogAsync(LogMessage log)
     {
-        _ = Logger.Log(log.ToString());
-        return Task.CompletedTask;
+        await _services.GetRequiredService<Logger>().Log(log.ToString());
     }
 
     static bool IsDebug()

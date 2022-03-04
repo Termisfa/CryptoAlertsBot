@@ -1,14 +1,8 @@
 ﻿using CryptoAlertsBot.ApiHandler;
 using CryptoAlertsBot.Models;
 using CryptoAlertsBot.Models.MergedModels;
-using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CryptoAlertsBot.Discord
 {
@@ -29,7 +23,7 @@ namespace CryptoAlertsBot.Discord
 
         public static async Task<ulong> GetCategoryChannelIdFromUserId(string userId)
         {
-            var user = await MostUsedApiCalls.GetUserByIdForcingOne(userId);
+            var user = await MostUsedApiCalls.GetUserById(userId);
 
             return ulong.Parse(user.IdCategoryChannel);
         }

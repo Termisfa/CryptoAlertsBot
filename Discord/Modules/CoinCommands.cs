@@ -13,9 +13,12 @@ namespace CryptoAlertsBot.Discord.Modules
     public class CoinCommands : InteractionModuleBase<SocketInteractionContext>
     {
         private readonly ConstantsHandler _constantsHandler;
-        public CoinCommands(ConstantsHandler constantsHandler)
+        private readonly Logger _logger;
+
+        public CoinCommands(ConstantsHandler constantsHandler, Logger logger)
         {
             _constantsHandler = constantsHandler;
+            _logger = logger;
         }
 
         [SlashCommand("nuevamoneda", "Añade una nueva moneda. Introducir la address")]
@@ -61,11 +64,12 @@ namespace CryptoAlertsBot.Discord.Modules
             }
             catch (Exception e)
             {
-                await RespondAsync("Ha ocurrido un error");
+                _ = RespondAsync("Ha ocurrido un error");
+                _ = _logger.Log(exception: e);
             }
         }
 
-        [SlashCommand("olvidarmoneda", "Elimina una moneda. Especificar el canal")]
+        [SlashCommand("borrarmoneda", "Elimina una moneda. Especificar el canal")]
         public async Task DeleteCoin(
             [Summary("Canal", "Canal de la moneda. Ejemplo: #WBNB")][IsCoinChannel] SocketTextChannel coinChannel
             )
@@ -86,7 +90,8 @@ namespace CryptoAlertsBot.Discord.Modules
             }
             catch (Exception e)
             {
-                await RespondAsync("Ha ocurrido un error");
+                _ = RespondAsync("Ha ocurrido un error");
+                _ = _logger.Log(exception: e);
             }
         }
 

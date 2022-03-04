@@ -8,15 +8,18 @@ using static CryptoAlertsBot.Helpers.Helpers;
 
 namespace CryptoAlertsBot.Discord.Modules
 {
-    
+
     public class AlertCommands : InteractionModuleBase<SocketInteractionContext>
     {
         private readonly ConstantsHandler _constantsHandler;
-        public AlertCommands(ConstantsHandler constantsHandler)
+        private readonly Logger _logger;
+
+        public AlertCommands(ConstantsHandler constantsHandler, Logger logger)
         {
             _constantsHandler = constantsHandler;
+            _logger = logger;
         }
-        
+
         [SlashCommand("nuevaalerta", "Añade una nueva alerta")]
         public async Task NewAlert(
             [Summary("Canal", "Canal de la moneda. Ejemplo: #WBNB")][IsCoinChannel] SocketTextChannel coinChannel,
@@ -57,7 +60,8 @@ namespace CryptoAlertsBot.Discord.Modules
             }
             catch (Exception e)
             {
-                await RespondAsync("Ha ocurrido un error");
+                _ = RespondAsync("Ha ocurrido un error");
+                _ = _logger.Log(exception: e);
             }
         }
 
@@ -92,7 +96,8 @@ namespace CryptoAlertsBot.Discord.Modules
             }
             catch (Exception e)
             {
-                await RespondAsync("Ha ocurrido un error");
+                _ = RespondAsync("Ha ocurrido un error");
+                _ = _logger.Log(exception: e);
             }
         }
 
@@ -106,6 +111,7 @@ namespace CryptoAlertsBot.Discord.Modules
             catch (Exception e)
             {
                 _ = RespondAsync("Ha ocurrido un error");
+                _ = _logger.Log(exception: e);
             }
         }
     }

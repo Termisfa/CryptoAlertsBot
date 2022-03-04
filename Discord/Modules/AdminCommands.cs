@@ -13,14 +13,17 @@ namespace CryptoAlertsBot.Discord.Modules
     public class AdminCommands : ModuleBase<SocketCommandContext>
     {
         private readonly ConstantsHandler _constantsHandler;
-        public AdminCommands(ConstantsHandler constantsHandler)
+        private readonly Logger _logger;
+
+        public AdminCommands(ConstantsHandler constantsHandler, Logger logger)
         {
             _constantsHandler = constantsHandler;
+            _logger = logger;
         }
 
         [Command("CLEAR")]
         [Alias("BORRAR")]
-        public async Task Clear(int amount = 100)
+        public async Task Clear(int amount = 99)
         {
             try
             {
@@ -36,6 +39,7 @@ namespace CryptoAlertsBot.Discord.Modules
             catch (Exception e)
             {
                 _ = ReplyAsync("Ha ocurrido un error");
+                _ = _logger.Log(exception: e);
             }
         }
 
@@ -54,6 +58,7 @@ namespace CryptoAlertsBot.Discord.Modules
             catch (Exception e)
             {
                 _ = ReplyAsync("Ha ocurrido un error");
+                _ = _logger.Log(exception: e);
             }
         }
 
@@ -69,6 +74,7 @@ namespace CryptoAlertsBot.Discord.Modules
             catch (Exception e)
             {
                 _ = ReplyAsync("Ha ocurrido un error");
+                _ = _logger.Log(e.Message);
             }
         }
 
@@ -87,6 +93,7 @@ namespace CryptoAlertsBot.Discord.Modules
             catch (Exception e)
             {
                 _ = ReplyAsync("Ha ocurrido un error");
+                _ = _logger.Log(exception: e);
             }
         }
 
@@ -105,6 +112,7 @@ namespace CryptoAlertsBot.Discord.Modules
             catch (Exception e)
             {
                 _ = ReplyAsync("Ha ocurrido un error");
+                _ = _logger.Log(exception: e);
             }
         }
 

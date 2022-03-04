@@ -12,68 +12,79 @@ namespace CryptoAlertsBot
     {
         private readonly DiscordSocketClient _client;
         private readonly ConstantsHandler _constantsHandler;
-        public FillPricesDB(DiscordSocketClient client, ConstantsHandler constantsHandler)
+        private readonly Logger _logger;
+
+        public FillPricesDB(DiscordSocketClient client, ConstantsHandler constantsHandler, Logger logger)
         {
             _client = client;
             _constantsHandler = constantsHandler;
+            _logger = logger;
         }
 
         public void Initialize()
         {
             int timeStepInMilliseconds = 1000 * 60 * 1; //Debería ser 1000 * 60 * 1  (1 min)
-            Timer timer = new(TimerCallbackAsync, null, 0, timeStepInMilliseconds);
+            Timer timer = new(FillPricesTimerCallbackAsync, null, 0, timeStepInMilliseconds);
         }
 
-        private async void TimerCallbackAsync(Object? stateInfo)
+        private async void FillPricesTimerCallbackAsync(Object? stateInfo)
         {
-            var coinsList = await BuildAndExeApiCall.GetAllTable<Coins>();
+            try
+            {
+                var coinsList = await BuildAndExeApiCall.GetAllTable<Coins>();
 
-            coinsList.AsParallel().ForAll(coin => _ = FillPrice(coin));
+                coinsList.AsParallel().ForAll(coin => _ = FillPrice(coin));
+            }
+            catch (Exception e)
+            {
+                _ = _logger.Log(exception: e);
+            }
         }
 
         private async Task FillPrice(Coins coin)
         {
-            try
+            ResultPancakeSwapApi coinInfo = await MostUsedApiCalls.GetFromPancakeSwapApi(_constantsHandler.GetConstant(ConstantsNames.URL_API), coin.Address);
+
+            Prices price = await UpdateDatabase(coin, coinInfo);
+
+            if (price != default)
             {
-                var categoryChannelDb = _client.Guilds.First().CategoryChannels.First(w => w.Id == ulong.Parse(_constantsHandler.GetConstant(ConstantsNames.DB_CATEGORY_CHANNEL_ID)));
-
-                var coinChannel = categoryChannelDb.Channels.FirstOrDefault(w => w.Id == ulong.Parse(coin.IdChannel));
-
-                if (coinChannel == null)
-                    throw new Exception($"El canal de la moneda `{coin.Name}:{coin.Address}` no existe");
-
-                Dictionary<string, string> parameters = new();
-                parameters.Add("coinAddress", coin.Address);
-                parameters.Add("priceDate", $"$(select max(priceDate) from prices where coinAddress = '{coin.Address}')");
-
-                var previousPrice = (await BuildAndExeApiCall.GetWithMultipleArguments<Prices>(parameters)).FirstOrDefault();
-
-                ResultPancakeSwapApi coinInfo = await MostUsedApiCalls.GetFromPancakeSwapApi(_constantsHandler.GetConstant(ConstantsNames.URL_API), coin.Address);
-
-                if (previousPrice != null && coinInfo.Updated_at == previousPrice.PriceDate)
-                    return;
-
-                Prices price = new()
-                {
-                    CoinAddress = coin.Address,
-                    PriceUsd = coinInfo.Price,
-                    PriceDate = coinInfo.Updated_at,
-                };
-
-                _ = BuildAndExeApiCall.Post("prices", price);
-
-                _ = (coinChannel as SocketTextChannel).SendMessageAsync(await CommonFunctionality.FormatPriceToDatabaseChannelAsync(price, previousPrice));
-
                 CheckAlerts(coin, coinInfo.Price);
-
                 UpdateResume(coin, price);
             }
-            catch (Exception e)
-            {
-                _ = Logger.Log(e.Message);
-                _ = Logger.Log(e.StackTrace);
-            }
 
+        }
+
+        private async Task<Prices> UpdateDatabase(Coins coin, ResultPancakeSwapApi coinInfo)
+        {
+            var categoryChannelDb = _client.Guilds.First().CategoryChannels.First(w => w.Id == ulong.Parse(_constantsHandler.GetConstant(ConstantsNames.DB_CATEGORY_CHANNEL_ID)));
+
+            var coinChannel = categoryChannelDb.Channels.FirstOrDefault(w => w.Id == ulong.Parse(coin.IdChannel));
+
+            if (coinChannel == null)
+                throw new Exception($"El canal de la moneda `{coin.Name}:{coin.Address}` no existe");
+
+            Dictionary<string, string> parameters = new();
+            parameters.Add("coinAddress", coin.Address);
+            parameters.Add("priceDate", $"$(select max(priceDate) from prices where coinAddress = '{coin.Address}')");
+
+            var previousPrice = (await BuildAndExeApiCall.GetWithMultipleArguments<Prices>(parameters)).FirstOrDefault();
+
+            if (previousPrice != null && coinInfo.Updated_at == previousPrice.PriceDate)
+                return default;
+
+            Prices price = new()
+            {
+                CoinAddress = coin.Address,
+                PriceUsd = coinInfo.Price,
+                PriceDate = coinInfo.Updated_at,
+            };
+
+            _ = BuildAndExeApiCall.Post("prices", price);
+
+            _ = (coinChannel as SocketTextChannel).SendMessageAsync(await CommonFunctionality.FormatPriceToDatabaseChannelAsync(price, previousPrice));
+
+            return price;
         }
 
         private async void UpdateResume(Coins coin, Prices price)
@@ -104,13 +115,13 @@ namespace CryptoAlertsBot
             {
                 if (Helpers.Helpers.IsGreaterOrLesserHandler(AlertsHelper.GetAlertSign(alertUser.Alert.AlertType), price, alertUser.Alert.PriceUsd))
                 {
-                    if(alertUser.Alert.LastAlert == null)
+                    if (alertUser.Alert.LastAlert == null)
                         _ = NotifyAlert(alertUser, price, coin.IdChannel);
                     else
                     {
                         double alertsCooldown = double.Parse(_constantsHandler.GetConstant(ConstantsNames.ALERTS_COOLDOWN));
 
-                        if((DateTime.Now - alertUser.Alert.LastAlert.Value).TotalHours > alertsCooldown)
+                        if ((DateTime.Now - alertUser.Alert.LastAlert.Value).TotalHours > alertsCooldown)
                         {
                             List<Prices> prices = (await BuildAndExeApiCall.GetWithOneArgument<Prices>("coinAddress", coin.Address)).Where(w => w.PriceDate >= alertUser.Alert.LastAlert.Value.AddHours(alertsCooldown)).ToList();
 
@@ -143,7 +154,7 @@ namespace CryptoAlertsBot
 
             var priceLength = int.Parse(_constantsHandler.GetConstant(ConstantsNames.PRICE_LENGTH));
             string trimmedPrice = price.ToString();
-            if(trimmedPrice.Length > priceLength)
+            if (trimmedPrice.Length > priceLength)
                 trimmedPrice = trimmedPrice.Substring(0, priceLength);
 
             string upOrDown = alertUser.Alert.AlertType == AlertsEnum.Sube.ToString() ? $"subido" : "bajado";
