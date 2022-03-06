@@ -11,15 +11,17 @@ namespace CryptoAlertsBot
     public class ConstantsHandler
     {
         private List<Constants> constantsList;
+        private readonly BuildAndExeApiCall _buildAndExeApiCall;
 
-        public ConstantsHandler()
+        public ConstantsHandler(BuildAndExeApiCall buildAndExeApiCall)
         {
+            _buildAndExeApiCall = buildAndExeApiCall;
             Initialize();
         }
 
         private async void Initialize()
         {
-            constantsList = await BuildAndExeApiCall.GetAllTable<Constants>();
+            constantsList = await _buildAndExeApiCall.GetAllTable<Constants>();
         }
 
         public string GetConstant(string constantName)
@@ -30,7 +32,7 @@ namespace CryptoAlertsBot
 
         public async Task<bool> DeleteConstantAsync(string constantName)
         {
-            int deletedRows = await BuildAndExeApiCall.DeleteWithOneArgument("constants", "name", constantName);
+            int deletedRows = await _buildAndExeApiCall.DeleteWithOneArgument("constants", "name", constantName);
 
             if (deletedRows > 0)
             {
@@ -50,7 +52,7 @@ namespace CryptoAlertsBot
 
             constant.Text = value;
 
-            _ = BuildAndExeApiCall.PutWithOneArgument("constants", constant, "name", constantName);
+            _ = _buildAndExeApiCall.PutWithOneArgument("constants", constant, "name", constantName);
 
             return true;
         }
@@ -66,7 +68,7 @@ namespace CryptoAlertsBot
             constant.Name = constantName;
             constant.Text = value;
 
-            _ = BuildAndExeApiCall.Post("constants", constant);
+            _ = _buildAndExeApiCall.Post("constants", constant);
 
             return true;
         }

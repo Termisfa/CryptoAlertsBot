@@ -13,25 +13,39 @@ namespace CryptoAlertsBot
         private readonly DiscordSocketClient _client;
         private readonly ConstantsHandler _constantsHandler;
         private readonly Logger _logger;
+        private readonly BuildAndExeApiCall _buildAndExeApiCall;
+        private readonly MostUsedApiCalls _mostUsedApiCalls;
+        private readonly CommonFunctionality _commonFunctionality;
 
-        public FillPricesDB(DiscordSocketClient client, ConstantsHandler constantsHandler, Logger logger)
+        public FillPricesDB(DiscordSocketClient client, ConstantsHandler constantsHandler, Logger logger, BuildAndExeApiCall buildAndExeApiCall, MostUsedApiCalls mostUsedApiCalls, CommonFunctionality commonFunctionality)
         {
             _client = client;
             _constantsHandler = constantsHandler;
             _logger = logger;
+            _buildAndExeApiCall = buildAndExeApiCall;
+            _mostUsedApiCalls = mostUsedApiCalls;
+            _commonFunctionality = commonFunctionality;
         }
 
         public void Initialize()
         {
-            int timeStepInMilliseconds = 1000 * 60 * 1; //Debería ser 1000 * 60 * 1  (1 min)
-            Timer timer = new(FillPricesTimerCallbackAsync, null, 0, timeStepInMilliseconds);
+            try
+            {
+                var timer = new System.Timers.Timer(1000 * 10 * 1); //Debería ser 1000 * 60 * 1  (1 min)
+                timer.Start();
+                timer.Elapsed += FillPricesTimerCallbackAsync;
+            }
+            catch (Exception e)
+            {
+                _ = _logger.Log(exception: e);
+            }
         }
 
-        private async void FillPricesTimerCallbackAsync(Object? stateInfo)
+        private async void FillPricesTimerCallbackAsync(object? sender, System.Timers.ElapsedEventArgs elapsed)
         {
             try
             {
-                var coinsList = await BuildAndExeApiCall.GetAllTable<Coins>();
+                var coinsList = await _buildAndExeApiCall.GetAllTable<Coins>();
 
                 coinsList.AsParallel().ForAll(coin => _ = FillPrice(coin));
             }
@@ -43,7 +57,7 @@ namespace CryptoAlertsBot
 
         private async Task FillPrice(Coins coin)
         {
-            ResultPancakeSwapApi coinInfo = await MostUsedApiCalls.GetFromPancakeSwapApi(_constantsHandler.GetConstant(ConstantsNames.URL_API), coin.Address);
+            ResultPancakeSwapApi coinInfo = await _mostUsedApiCalls.GetFromPancakeSwapApi(_constantsHandler.GetConstant(ConstantsNames.URL_API), coin.Address);
 
             Prices price = await UpdateDatabase(coin, coinInfo);
 
@@ -68,7 +82,7 @@ namespace CryptoAlertsBot
             parameters.Add("coinAddress", coin.Address);
             parameters.Add("priceDate", $"$(select max(priceDate) from prices where coinAddress = '{coin.Address}')");
 
-            var previousPrice = (await BuildAndExeApiCall.GetWithMultipleArguments<Prices>(parameters)).FirstOrDefault();
+            var previousPrice = (await _buildAndExeApiCall.GetWithMultipleArguments<Prices>(parameters)).FirstOrDefault();
 
             if (previousPrice != null && coinInfo.Updated_at == previousPrice.PriceDate)
                 return default;
@@ -80,25 +94,25 @@ namespace CryptoAlertsBot
                 PriceDate = coinInfo.Updated_at,
             };
 
-            _ = BuildAndExeApiCall.Post("prices", price);
+            _ = _buildAndExeApiCall.Post("prices", price);
 
-            _ = (coinChannel as SocketTextChannel).SendMessageAsync(await CommonFunctionality.FormatPriceToDatabaseChannelAsync(price, previousPrice));
+            _ = (coinChannel as SocketTextChannel).SendMessageAsync(await _commonFunctionality.FormatPriceToDatabaseChannelAsync(price, previousPrice));
 
             return price;
         }
 
         private async void UpdateResume(Coins coin, Prices price)
         {
-            var alerts = (await BuildAndExeApiCall.GetWithOneArgument<Alerts>("coinAddress", coin.Address)).DistinctBy(w => w.UserId).ToList();
+            var alerts = (await _buildAndExeApiCall.GetWithOneArgument<Alerts>("coinAddress", coin.Address)).DistinctBy(w => w.UserId).ToList();
 
             foreach (var alert in alerts)
             {
-                var categoryChannelId = await CommonFunctionality.GetCategoryChannelIdFromUserId(alert.UserId);
+                var categoryChannelId = await _commonFunctionality.GetCategoryChannelIdFromUserId(alert.UserId);
                 var resumeChannel = (SocketTextChannel)_client.Guilds.First().GetCategoryChannel(categoryChannelId).Channels?.FirstOrDefault(w => w.Name.Contains("resumen"));
 
                 await resumeChannel.DeleteMessagesAsync(await resumeChannel.GetMessagesAsync().Flatten().Where(w => w.Content.Contains(coin.Name)).ToListAsync());
 
-                _ = resumeChannel.SendMessageAsync(await CommonFunctionality.FormatPriceToResumeChannelAsync(coin, price, _constantsHandler.GetConstant(ConstantsNames.URL_POOCOIN)));
+                _ = resumeChannel.SendMessageAsync(await _commonFunctionality.FormatPriceToResumeChannelAsync(coin, price, _constantsHandler.GetConstant(ConstantsNames.URL_POOCOIN)));
             }
         }
 
@@ -109,7 +123,7 @@ namespace CryptoAlertsBot
             arguments.Add("userId", "$users.Id");
             arguments.Add("active", "$true");
 
-            var alertsUsersList = await BuildAndExeApiCall.GetWithMultipleArguments<AlertsUsers>(arguments, "alerts,users");
+            var alertsUsersList = await _buildAndExeApiCall.GetWithMultipleArguments<AlertsUsers>(arguments, "alerts,users");
 
             foreach (var alertUser in alertsUsersList)
             {
@@ -123,7 +137,7 @@ namespace CryptoAlertsBot
 
                         if ((DateTime.Now - alertUser.Alert.LastAlert.Value).TotalHours > alertsCooldown)
                         {
-                            List<Prices> prices = (await BuildAndExeApiCall.GetWithOneArgument<Prices>("coinAddress", coin.Address)).Where(w => w.PriceDate >= alertUser.Alert.LastAlert.Value.AddHours(alertsCooldown)).ToList();
+                            List<Prices> prices = (await _buildAndExeApiCall.GetWithOneArgument<Prices>("coinAddress", coin.Address)).Where(w => w.PriceDate >= alertUser.Alert.LastAlert.Value.AddHours(alertsCooldown)).ToList();
 
                             foreach (var priceRow in prices)
                             {
@@ -142,7 +156,7 @@ namespace CryptoAlertsBot
         private Task NotifyAlert(AlertsUsers alertUser, double price, string coinChannelId)
         {
             alertUser.Alert.LastAlert = DateTime.Now;
-            _ = BuildAndExeApiCall.PutWithOneArgument("alerts", alertUser.Alert, "id", alertUser.Alert.Id.ToString());
+            _ = _buildAndExeApiCall.PutWithOneArgument("alerts", alertUser.Alert, "id", alertUser.Alert.Id.ToString());
 
 
             var categoryChannel = _client.Guilds.First().CategoryChannels.First(w => w.Id == ulong.Parse(alertUser.User.IdCategoryChannel));

@@ -6,9 +6,19 @@ using Discord.WebSocket;
 
 namespace CryptoAlertsBot.Discord
 {
-    public static class CommonFunctionality
+    public class CommonFunctionality
     {
-        public static async void UpdateAlertsResume(SocketInteractionContext context)
+
+        private readonly BuildAndExeApiCall _buildAndExeApiCall;
+        private readonly MostUsedApiCalls _mostUsedApiCalls;
+
+        public CommonFunctionality(BuildAndExeApiCall buildAndExeApiCall, MostUsedApiCalls mostUsedApiCalls)
+        {
+            _buildAndExeApiCall = buildAndExeApiCall;
+            _mostUsedApiCalls = mostUsedApiCalls;
+        }
+
+        public async void UpdateAlertsResume(SocketInteractionContext context)
         {
             string alertsMsg = await GetAlertsMsg(context);
 
@@ -21,20 +31,20 @@ namespace CryptoAlertsBot.Discord
             (await resumeChannel.SendMessageAsync(alertsMsg))?.PinAsync();
         }
 
-        public static async Task<ulong> GetCategoryChannelIdFromUserId(string userId)
+        public async Task<ulong> GetCategoryChannelIdFromUserId(string userId)
         {
-            var user = await MostUsedApiCalls.GetUserById(userId);
+            var user = await _mostUsedApiCalls.GetUserById(userId);
 
             return ulong.Parse(user.IdCategoryChannel);
         }
 
-        public static async Task<string> GetAlertsMsg(SocketInteractionContext context)
+        public async Task<string> GetAlertsMsg(SocketInteractionContext context)
         {
             Dictionary<string, string> arguments = new();
             arguments.Add("coinAddress", "$address");
             arguments.Add("userId", context.User.Id.ToString());
 
-            var queryResult = await BuildAndExeApiCall.GetWithMultipleArguments<AlertsCoins>(arguments, "alerts,coins");
+            var queryResult = await _buildAndExeApiCall.GetWithMultipleArguments<AlertsCoins>(arguments, "alerts,coins");
 
             string msg = "Resumen de alertas actuales: \n";
 
@@ -49,7 +59,7 @@ namespace CryptoAlertsBot.Discord
             return msg;
         }
 
-        public static async Task<string> FormatPriceToDatabaseChannelAsync(Prices price, Prices previousPrice)
+        public async Task<string> FormatPriceToDatabaseChannelAsync(Prices price, Prices previousPrice)
         {
             string emote = string.Empty;
 
@@ -64,7 +74,7 @@ namespace CryptoAlertsBot.Discord
             return result;
         }
 
-        public static async Task<string> FormatPriceToResumeChannelAsync(Coins coin, Prices price, string urlPooCoin)
+        public async Task<string> FormatPriceToResumeChannelAsync(Coins coin, Prices price, string urlPooCoin)
         {
             string result = new string('-', 60) + "\n";
 
@@ -78,9 +88,9 @@ namespace CryptoAlertsBot.Discord
             return result;
         }
 
-        public static async Task<string> GetRoundedPriceAsync(double price)
+        public async Task<string> GetRoundedPriceAsync(double price)
         {
-            int priceLength = int.Parse(await MostUsedApiCalls.GetConstantTextByName(ConstantsNames.PRICE_LENGTH));
+            int priceLength = int.Parse(await _mostUsedApiCalls.GetConstantTextByName(ConstantsNames.PRICE_LENGTH));
 
             string result = price.ToString();
             if(result.Length > priceLength)

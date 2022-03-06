@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoAlertsBot", "CryptoAlertsBot.csproj", "{F2546C18-0796-4930-A616-2741B67CE596}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GenericApiHandler", "..\GenericApiHandler\GenericApiHandler.csproj", "{AAAE68E0-55AF-46D5-9CEC-42B9C186A2F6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{F2546C18-0796-4930-A616-2741B67CE596}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F2546C18-0796-4930-A616-2741B67CE596}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F2546C18-0796-4930-A616-2741B67CE596}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AAAE68E0-55AF-46D5-9CEC-42B9C186A2F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AAAE68E0-55AF-46D5-9CEC-42B9C186A2F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AAAE68E0-55AF-46D5-9CEC-42B9C186A2F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AAAE68E0-55AF-46D5-9CEC-42B9C186A2F6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

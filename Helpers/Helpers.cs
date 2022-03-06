@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Globalization;
 
 namespace CryptoAlertsBot.Helpers
 {
@@ -15,11 +11,12 @@ namespace CryptoAlertsBot.Helpers
             return dateTime;
         }
 
-        public static double StringPriceToDouble(string price, int maxLength = default)
+        public static double StringPriceToDouble(string price, int maxLength)
         {
-            price = price.Substring(0, maxLength).Replace('.', ',');
+            if (price.Length > maxLength)
+                price = price.Substring(0, maxLength);
 
-            double priceDouble = double.Parse(price);
+            double priceDouble = double.Parse(price.Replace(',', '.'), CultureInfo.InvariantCulture);
 
             return priceDouble;
         }

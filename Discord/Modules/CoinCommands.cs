@@ -14,11 +14,15 @@ namespace CryptoAlertsBot.Discord.Modules
     {
         private readonly ConstantsHandler _constantsHandler;
         private readonly Logger _logger;
+        private readonly BuildAndExeApiCall _buildAndExeApiCall;
+        private readonly MostUsedApiCalls _mostUsedApiCalls;
 
-        public CoinCommands(ConstantsHandler constantsHandler, Logger logger)
+        public CoinCommands(ConstantsHandler constantsHandler, Logger logger, BuildAndExeApiCall buildAndExeApiCall, MostUsedApiCalls mostUsedApiCalls)
         {
             _constantsHandler = constantsHandler;
             _logger = logger;
+            _buildAndExeApiCall = buildAndExeApiCall;
+            _mostUsedApiCalls = mostUsedApiCalls;
         }
 
         [SlashCommand("nuevamoneda", "Añade una nueva moneda. Introducir la address")]
@@ -30,7 +34,7 @@ namespace CryptoAlertsBot.Discord.Modules
             {
                 coinAddress = coinAddress.ToLower().Trim();
 
-                var coins = await BuildAndExeApiCall.GetWithOneArgument<Coins>("address", coinAddress);
+                var coins = await _buildAndExeApiCall.GetWithOneArgument<Coins>("address", coinAddress);
                 if (coins.Count != 0)
                 {
                     await RespondAsync($"La moneda <#{coins[0].IdChannel}> ya existe");
@@ -38,7 +42,7 @@ namespace CryptoAlertsBot.Discord.Modules
                 }
 
                 string urlApi = _constantsHandler.GetConstant(ConstantsNames.URL_API);
-                ResultPancakeSwapApi coinInfo = await MostUsedApiCalls.GetFromPancakeSwapApi(urlApi, coinAddress);
+                ResultPancakeSwapApi coinInfo = await _mostUsedApiCalls.GetFromPancakeSwapApi(urlApi, coinAddress);
                 if (coinInfo == default)
                 {
                     await RespondAsync($"La moneda '{coinAddress}' no existe en PancakeSwap");
@@ -58,7 +62,7 @@ namespace CryptoAlertsBot.Discord.Modules
                     Symbol = coinInfo.Symbol,
                     IdChannel = coinChannel.Id.ToString()
                 };
-                _ = BuildAndExeApiCall.Post("coins", coin);
+                _ = _buildAndExeApiCall.Post("coins", coin);
 
                 await RespondAsync($"Moneda <#{coinChannel.Id}> añadida con éxito");
             }
@@ -76,7 +80,7 @@ namespace CryptoAlertsBot.Discord.Modules
         {
             try
             {
-                var listAlerts = await BuildAndExeApiCall.GetWithOneArgument<Alerts>("coinAddress", $"$(select address from coins where idChannel = '{coinChannel.Id}')");
+                var listAlerts = await _buildAndExeApiCall.GetWithOneArgument<Alerts>("coinAddress", $"$(select address from coins where idChannel = '{coinChannel.Id}')");
                 if (listAlerts.Count != 0)
                 {
                     await RespondAsync("No se puede eliminar una moneda que tiene alertas activas de algún usuario");
@@ -84,7 +88,7 @@ namespace CryptoAlertsBot.Discord.Modules
                 }
 
                 _ = coinChannel.DeleteAsync();
-                _ = BuildAndExeApiCall.DeleteWithOneArgument("coins", "idChannel", coinChannel.Id.ToString());
+                _ = _buildAndExeApiCall.DeleteWithOneArgument("coins", "idChannel", coinChannel.Id.ToString());
 
                 await RespondAsync($"Moneda eliminada con éxito");
             }

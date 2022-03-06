@@ -10,10 +10,14 @@ namespace CryptoAlertsBot.Discord.Modules
     public class UserCommands : InteractionModuleBase<SocketInteractionContext>
     {
         private readonly Logger _logger;
+        private readonly BuildAndExeApiCall _buildAndExeApiCall;
+        private readonly MostUsedApiCalls _mostUsedApiCalls;
 
-        public UserCommands(Logger logger)
+        public UserCommands(Logger logger, BuildAndExeApiCall buildAndExeApiCall, MostUsedApiCalls mostUsedApiCalls)
         {
             _logger = logger;
+            _buildAndExeApiCall = buildAndExeApiCall;
+            _mostUsedApiCalls = mostUsedApiCalls;
         }
 
         [SlashCommand("nuevousuario", "Es necesario para utilizar las alertas")]
@@ -22,7 +26,7 @@ namespace CryptoAlertsBot.Discord.Modules
             try
             {
                 var userId = Context.User.Id.ToString();
-                Users user = await MostUsedApiCalls.GetUserById(userId);
+                Users user = await _mostUsedApiCalls.GetUserById(userId);
 
                 if (user != default)
                 {
@@ -31,7 +35,7 @@ namespace CryptoAlertsBot.Discord.Modules
                     else
                     {
                         user.Active = true;
-                        await MostUsedApiCalls.UpdateUserById(userId, user);
+                        await _mostUsedApiCalls.UpdateUserById(userId, user);
                         await RespondAsync($"Usuario <@{userId}> reactivado");
                     }
                     return;
@@ -55,7 +59,7 @@ namespace CryptoAlertsBot.Discord.Modules
                     IdCategoryChannel = categoryChannel.Id.ToString()
                 };
 
-                var affectedRows = await BuildAndExeApiCall.Post("users", user);
+                var affectedRows = await _buildAndExeApiCall.Post("users", user);
 
                 if (affectedRows == 1)
                     await RespondAsync($"Usuario <@{userId}> añadido con éxito");
@@ -81,7 +85,7 @@ namespace CryptoAlertsBot.Discord.Modules
                     Active = false
                 };
 
-                var affectedRows = await BuildAndExeApiCall.PutWithOneArgument("users", user, "id", userId);
+                var affectedRows = await _buildAndExeApiCall.PutWithOneArgument("users", user, "id", userId);
 
                 if (affectedRows != 1)
                     await RespondAsync($"El usuario <@{userId}> no estaba dado de alta");

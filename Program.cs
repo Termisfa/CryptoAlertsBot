@@ -1,4 +1,5 @@
 ﻿using CryptoAlertsBot;
+using CryptoAlertsBot.ApiHandler;
 using CryptoAlertsBot.Discord;
 using CryptoAlertsBot.Discord.Modules;
 using Discord;
@@ -6,6 +7,7 @@ using Discord.Commands;
 using Discord.Interactions;
 using Discord.Net;
 using Discord.WebSocket;
+using GenericApiHandler;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Configuration;
@@ -22,6 +24,7 @@ public partial class Program
 
     private async Task MainAsync()
     {
+
         using (_services = ConfigureServices())
         {
             _client = _services.GetRequiredService<DiscordSocketClient>();
@@ -36,7 +39,6 @@ public partial class Program
 
             await _services.GetRequiredService<CommandHandler>().InitializeAsync();
 
-
             await Task.Delay(-1);
         }
     }
@@ -45,12 +47,16 @@ public partial class Program
     {
         return new ServiceCollection()
             .AddSingleton<DiscordSocketClient>()
+            .AddSingleton<Logger>()
+            .AddSingleton<LogEvent>()
+            .AddSingleton<BuildAndExeApiCall>()
             .AddSingleton<ConstantsHandler>()
             .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
             .AddSingleton<CommandService>()
             .AddSingleton<CommandHandler>()
             .AddSingleton<FillPricesDB>()
-            .AddSingleton<Logger>()
+            .AddSingleton<MostUsedApiCalls>()
+            .AddSingleton<CommonFunctionality>()
             .BuildServiceProvider();
     }
 
@@ -58,7 +64,6 @@ public partial class Program
     {
         if (IsDebug())
         {
-            System.Console.WriteLine($"In debug mode, adding commands to 923597608302297119...");
             await _commands.RegisterCommandsToGuildAsync(ulong.Parse(AppSettingsManager.GetCryptoAllertsDiscordServerId()));
         }
         else

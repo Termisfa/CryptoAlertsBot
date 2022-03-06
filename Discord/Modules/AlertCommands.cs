@@ -4,20 +4,26 @@ using CryptoAlertsBot.Discord.Preconditions;
 using CryptoAlertsBot.Models;
 using Discord.Interactions;
 using Discord.WebSocket;
+using System.Globalization;
 using static CryptoAlertsBot.Helpers.Helpers;
 
 namespace CryptoAlertsBot.Discord.Modules
 {
-
     public class AlertCommands : InteractionModuleBase<SocketInteractionContext>
     {
         private readonly ConstantsHandler _constantsHandler;
         private readonly Logger _logger;
+        private readonly BuildAndExeApiCall _buildAndExeApiCall;
+        private readonly MostUsedApiCalls _mostUsedApiCalls;
+        private readonly CommonFunctionality _commonFunctionality;
 
-        public AlertCommands(ConstantsHandler constantsHandler, Logger logger)
+        public AlertCommands(ConstantsHandler constantsHandler, Logger logger, BuildAndExeApiCall buildAndExeApiCall, MostUsedApiCalls mostUsedApiCalls, CommonFunctionality commonFunctionality)
         {
             _constantsHandler = constantsHandler;
             _logger = logger;
+            _buildAndExeApiCall = buildAndExeApiCall;
+            _mostUsedApiCalls = mostUsedApiCalls;
+            _commonFunctionality = commonFunctionality;
         }
 
         [SlashCommand("nuevaalerta", "Añade una nueva alerta")]
@@ -29,13 +35,13 @@ namespace CryptoAlertsBot.Discord.Modules
         {
             try
             {
-                if ((await MostUsedApiCalls.GetUserById(Context.User.Id.ToString())) == default)
+                if ((await _mostUsedApiCalls.GetUserById(Context.User.Id.ToString())) == default)
                 {
                     await RespondAsync("Error, para añadir una alerta primero debes darte de alta con el comando `!nuevousuario`");
                     return;
                 }
 
-                if (!double.TryParse(priceString.Replace('.', ','), out double price))
+                if (!double.TryParse(priceString.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out double price))
                 {
                     await RespondAsync($"Error, el precio `{priceString}` no es válido");
                     return;
@@ -53,10 +59,10 @@ namespace CryptoAlertsBot.Discord.Modules
                     AlertType = alertType.ToString()
                 };
 
-                _ = await BuildAndExeApiCall.Post("alerts", alert);
+                _ = await _buildAndExeApiCall.Post("alerts", alert);
 
                 await RespondAsync("Alerta añadida con éxito");
-                CommonFunctionality.UpdateAlertsResume(Context);
+                _commonFunctionality.UpdateAlertsResume(Context);
             }
             catch (Exception e)
             {
@@ -74,7 +80,7 @@ namespace CryptoAlertsBot.Discord.Modules
         {
             try
             {
-                if (!double.TryParse(priceString.Replace('.', ','), out double price))
+                if (!double.TryParse(priceString.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out double price))
                 {
                     await RespondAsync($"Error, el precio `{priceString}` no es válido");
                     return;
@@ -84,14 +90,14 @@ namespace CryptoAlertsBot.Discord.Modules
 
                 string coinAddress = pinnedMessage.Replace(_constantsHandler.GetConstant(ConstantsNames.URL_POOCOIN), "");
 
-                int deletedRows = await MostUsedApiCalls.DeleteAlert(Context.User.Id.ToString(), coinAddress, price.ToString(), alertType.ToString());
+                int deletedRows = await _mostUsedApiCalls.DeleteAlert(Context.User.Id.ToString(), coinAddress, price.ToString(), alertType.ToString());
 
                 if (deletedRows == 0)
                     await RespondAsync("No se ha encontrado la alerta");
                 else
                 {
                     await RespondAsync("Alerta eliminada");
-                    CommonFunctionality.UpdateAlertsResume(Context);
+                    _commonFunctionality.UpdateAlertsResume(Context);
                 }
             }
             catch (Exception e)
@@ -106,7 +112,7 @@ namespace CryptoAlertsBot.Discord.Modules
         {
             try
             {
-                _ = RespondAsync(await CommonFunctionality.GetAlertsMsg(Context));
+                _ = RespondAsync(await _commonFunctionality.GetAlertsMsg(Context));
             }
             catch (Exception e)
             {

@@ -1,28 +1,32 @@
 ﻿using CryptoAlertsBot.Models;
 using System.Text.Json;
-using static CryptoAlertsBot.Helpers.Helpers;
+using CryptoAlertsBot.ApiHandler;
+using GenericApiHandler.Data.Enums;
 
-namespace CryptoAlertsBot.ApiHandler
+namespace CryptoAlertsBot
 {
-    public static class MostUsedApiCalls
+    public class MostUsedApiCalls
     {
-        public static async Task<Users> GetUserById(string userId)
+        private readonly BuildAndExeApiCall _buildAndExeApiCall;
+
+        public MostUsedApiCalls(BuildAndExeApiCall buildAndExeApiCall)
         {
-            List<Users> users = await BuildAndExeApiCall.GetWithOneArgument<Users>("id", userId);
+            _buildAndExeApiCall = buildAndExeApiCall;
+        }
+
+        public async Task<Users> GetUserById(string userId)
+        {
+            List<Users> users = await _buildAndExeApiCall.GetWithOneArgument<Users>("id", userId);
 
             if (users.Count == 1)
                 return users[0];
-            else if (users.Count == 0)
-                return default;
-            else
-            {
-                throw new Exception("Error in GetUserById. UserIdProvided: " + userId);
-            }
+
+            return default;
         }
 
-        public static async Task UpdateUserById(string userId, Users user)
+        public async Task UpdateUserById(string userId, Users user)
         {
-            int affectedRows = await BuildAndExeApiCall.PutWithOneArgument("users", user, "id", userId);
+            int affectedRows = await _buildAndExeApiCall.PutWithOneArgument("users", user, "id", userId);
 
             if (affectedRows != 1)
             {
@@ -30,31 +34,17 @@ namespace CryptoAlertsBot.ApiHandler
             }
         }
 
-        public static async Task DeleteUserById(string userId)
+        public async Task<Coins> GetCoinByAddress(string address)
         {
-            int affectedRows = await BuildAndExeApiCall.DeleteWithOneArgument("users", "id", userId);
-
-            if (affectedRows != 1)
-            {
-                throw new Exception("Error in DeleteUserById. UserIdProvided: " + userId);
-            }
-        }
-
-        public static async Task<Coins> GetCoinByAddress(string address)
-        {
-            List<Coins> coins = await BuildAndExeApiCall.GetWithOneArgument<Coins>("address", address);
+            List<Coins> coins = await _buildAndExeApiCall.GetWithOneArgument<Coins>("address", address);
 
             if (coins.Count == 1)
                 return coins[0];
-            else if (coins.Count == 0)
-                return default;
-            else
-            {
-                throw new Exception("Error in GetCoinById. AddressProvided: " + address);
-            }
+
+            return default;
         }
 
-        public static async Task<int> DeleteAlert(string userId, string coinAddress, string priceUsd, string alertType)
+        public async Task<int> DeleteAlert(string userId, string coinAddress, string priceUsd, string alertType)
         {
             Dictionary<string, string> parameters = new();
             parameters.Add("userId", userId);
@@ -62,14 +52,14 @@ namespace CryptoAlertsBot.ApiHandler
             parameters.Add("priceUsd", priceUsd);
             parameters.Add("alertType", alertType);
 
-            int result = await BuildAndExeApiCall.DeleteWithMultipleArguments("Alerts", parameters);
+            int result = await _buildAndExeApiCall.DeleteWithMultipleArguments("Alerts", parameters);
 
             return result;
         }
 
-        public static async Task<string> GetConstantTextByName(string name)
+        public async Task<string> GetConstantTextByName(string name)
         {
-            var constants = await BuildAndExeApiCall.GetWithOneArgument<Constants>("name", name);
+            var constants = await _buildAndExeApiCall.GetWithOneArgument<Constants>("name", name);
 
             if (constants.Count != 1)
             {
@@ -79,9 +69,9 @@ namespace CryptoAlertsBot.ApiHandler
             return constants[0].Text;
         }
 
-        public static async Task<ResultPancakeSwapApi> GetFromPancakeSwapApi(string baseAddress, string coin)
+        public async Task<ResultPancakeSwapApi> GetFromPancakeSwapApi(string baseAddress, string coin)
         {
-            var httpResponse = await ApiCalls.Get(coin, baseAddress);
+            var httpResponse = await ApiCalls.ExeCall(ApiCallTypesEnum.Get, coin, baseAddress: baseAddress);
 
             if (!httpResponse.IsSuccessStatusCode)
                 return default;
@@ -94,11 +84,11 @@ namespace CryptoAlertsBot.ApiHandler
 
             ResultPancakeSwapApi result = new ResultPancakeSwapApi()
             {
-                Updated_at = UnixTimeStampToDateTime(resultPancakeSwapApiPreParsed.updated_at),
+                Updated_at = Helpers.Helpers.UnixTimeStampToDateTime(resultPancakeSwapApiPreParsed.updated_at),
                 Name = resultPancakeSwapApiPreParsed.data.name,
                 Symbol = resultPancakeSwapApiPreParsed.data.symbol,
-                Price = StringPriceToDouble(resultPancakeSwapApiPreParsed.data.price, priceLength),
-                Price_BNB = StringPriceToDouble(resultPancakeSwapApiPreParsed.data.price_BNB, priceLength + 3)
+                Price = Helpers.Helpers.StringPriceToDouble(resultPancakeSwapApiPreParsed.data.price, priceLength),
+                Price_BNB = Helpers.Helpers.StringPriceToDouble(resultPancakeSwapApiPreParsed.data.price_BNB, priceLength + 3)
             };
 
             return result;
