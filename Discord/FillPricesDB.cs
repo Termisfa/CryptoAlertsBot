@@ -31,7 +31,7 @@ namespace CryptoAlertsBot
         {
             try
             {
-                var timer = new System.Timers.Timer(1000 * 10 * 1); //Debería ser 1000 * 60 * 1  (1 min)
+                var timer = new System.Timers.Timer(1000 * 60 * 1); //Debería ser 1000 * 60 * 1  (1 min)
                 timer.Start();
                 timer.Elapsed += FillPricesTimerCallbackAsync;
             }
