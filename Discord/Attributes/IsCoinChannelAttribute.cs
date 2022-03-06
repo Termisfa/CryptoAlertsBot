@@ -9,23 +9,23 @@ namespace CryptoAlertsBot.Discord.Preconditions
     {
         public IsCoinChannelAttribute() { }
 
-        public override async Task<PreconditionResult> CheckRequirementsAsync(IInteractionContext context, IParameterInfo parameter, object value, IServiceProvider services)
+        public override Task<PreconditionResult> CheckRequirementsAsync(IInteractionContext context, IParameterInfo parameter, object value, IServiceProvider services)
         {
-            //ulong? channelCategoryId = ((SocketTextChannel)value).CategoryId;
+            ConstantsHandler constantsHandler = (ConstantsHandler)services.GetService(typeof(ConstantsHandler));
 
-            //if (context.User is SocketGuildUser gUser)
-            //{
-            //    string dbCategoryChannelId = await MostUsedApiCalls.GetConstantTextByName(ConstantsNames.DB_CATEGORY_CHANNEL_ID);
+            ulong? channelCategoryId = ((SocketTextChannel)value).CategoryId;
 
-            //    if (ulong.Parse(dbCategoryChannelId) == channelCategoryId)
-            //        return PreconditionResult.FromSuccess();
-            //    else
-            //        return PreconditionResult.FromError($"El canal introducido debe ser una moneda.");
-            //}
-            //else
-            //    return PreconditionResult.FromError("You must be in a guild to run this command.");
+            if (context.User is SocketGuildUser gUser)
+            {
+                string dbCategoryChannelId = constantsHandler.GetConstant(ConstantsNames.DB_CATEGORY_CHANNEL_ID);
 
-            return PreconditionResult.FromSuccess();
+                if (ulong.Parse(dbCategoryChannelId) == channelCategoryId)
+                    return Task.FromResult(PreconditionResult.FromSuccess());
+                else
+                    return Task.FromResult(PreconditionResult.FromError($"El canal introducido debe ser una moneda."));
+            }
+            else
+                return Task.FromResult(PreconditionResult.FromError("You must be in a guild to run this command."));
         }
     }
 }

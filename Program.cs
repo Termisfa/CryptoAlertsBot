@@ -49,6 +49,7 @@ public partial class Program
             .AddSingleton<DiscordSocketClient>()
             .AddSingleton<Logger>()
             .AddSingleton<LogEvent>()
+            .AddSingleton<LoggerEventListener>()
             .AddSingleton<BuildAndExeApiCall>()
             .AddSingleton<ConstantsHandler>()
             .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
@@ -74,7 +75,7 @@ public partial class Program
         Console.WriteLine($"Connected as -> [{_client.CurrentUser}] :)");
 
         _services.GetRequiredService<FillPricesDB>().Initialize();
-
+        _services.GetRequiredService<LoggerEventListener>().Initialize();
     }
 
     private async Task LogAsync(LogMessage log)

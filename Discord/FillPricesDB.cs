@@ -82,9 +82,11 @@ namespace CryptoAlertsBot
             parameters.Add("coinAddress", coin.Address);
             parameters.Add("priceDate", $"$(select max(priceDate) from prices where coinAddress = '{coin.Address}')");
 
-            var previousPrice = (await _buildAndExeApiCall.GetWithMultipleArguments<Prices>(parameters)).FirstOrDefault();
 
-            if (previousPrice != null && coinInfo.Updated_at == previousPrice.PriceDate)
+            var prices = await _buildAndExeApiCall.GetWithMultipleArguments<Prices>(parameters);
+            var previousPrice = prices.FirstOrDefault();
+
+            if (previousPrice != null && coinInfo.Updated_at <= previousPrice.PriceDate)
                 return default;
 
             Prices price = new()
@@ -157,7 +159,6 @@ namespace CryptoAlertsBot
         {
             alertUser.Alert.LastAlert = DateTime.Now;
             _ = _buildAndExeApiCall.PutWithOneArgument("alerts", alertUser.Alert, "id", alertUser.Alert.Id.ToString());
-
 
             var categoryChannel = _client.Guilds.First().CategoryChannels.First(w => w.Id == ulong.Parse(alertUser.User.IdCategoryChannel));
 

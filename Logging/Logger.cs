@@ -1,4 +1,5 @@
-﻿using Discord.WebSocket;
+﻿using CryptoAlertsBot.ApiHandler.Models;
+using Discord.WebSocket;
 using System.Diagnostics;
 
 namespace CryptoAlertsBot
@@ -14,19 +15,23 @@ namespace CryptoAlertsBot
             _constantsHandler = constantsHandler;
         }
 
-        public Task Log(string msg = default, Exception exception = default, string method = default)
+        public Task Log(string msg = default, Exception exception = default, Response response = default)
         {
-            method ??= new StackTrace().GetFrame(1).GetMethod().Name;
-            if (method == "MoveNext")
-                method = "discord logger";
-
-            msg = $"This log was fired in: `{method}`. \n" + msg;
+            msg = DateTime.Now.ToString("HH:mm:ss dd/MM/yyyy") + "\n" + msg;
 
             if (exception != default)
             {
                 msg += exception.Message + "\n";
                 msg += exception.StackTrace;
             }
+            else if(response != default)
+            {
+                msg += response.ErrorInfo.Message + "\n";
+                msg += "Query used: " + response.UsedQuery + "\n";
+                msg += response.ErrorInfo.StackTrace;
+            }
+
+            msg += "\n" + new string('-', 50);
 
             Console.WriteLine(msg);
 
