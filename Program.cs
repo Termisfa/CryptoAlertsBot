@@ -11,6 +11,7 @@ using GenericApiHandler;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Configuration;
+using System.Globalization;
 
 public partial class Program
 {
@@ -24,6 +25,9 @@ public partial class Program
 
     private async Task MainAsync()
     {
+        CultureInfo culture = new CultureInfo("es-ES");
+        Thread.CurrentThread.CurrentCulture = culture;
+        Thread.CurrentThread.CurrentUICulture = culture;
 
         using (_services = ConfigureServices())
         {

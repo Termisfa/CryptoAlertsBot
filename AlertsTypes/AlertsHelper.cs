@@ -5,13 +5,15 @@ namespace CryptoAlertsBot.AlertsTypes
     {
         public static string GetAlertSign(string alertWord)
         {
-            if (AlertsEnum.Sube.ToString() == alertWord)
-                return ">=";
-
-            if (AlertsEnum.Baja.ToString() == alertWord)
-                return "<=";
-
-            return default;
+            try
+            {
+                if (AlertsEnum.Sube.ToString() == alertWord)
+                    return ">=";
+                if (AlertsEnum.Baja.ToString() == alertWord)
+                    return "<=";
+                return default;
+            }
+            catch (Exception e) { throw; }
         }
     }
 }

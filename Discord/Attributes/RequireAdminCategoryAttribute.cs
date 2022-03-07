@@ -6,24 +6,31 @@ namespace CryptoAlertsBot.Discord.Preconditions
 {
     public class RequireAdminCategoryAttribute : PreconditionAttribute
     {
-        public RequireAdminCategoryAttribute() {}
+        public RequireAdminCategoryAttribute() { }
 
         public override async Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
-            ConstantsHandler constantsHandler = (ConstantsHandler)services.GetService(typeof(ConstantsHandler));
-
-            if (context.User is SocketGuildUser gUser)
+            try
             {
-                string adminCategoryId = constantsHandler.GetConstant(ConstantsNames.ADMIN_CATEGORY_ID);
-                var adminCategory = (SocketCategoryChannel)(await context.Guild.GetCategoriesAsync())?.FirstOrDefault(w => w.Id.ToString() == adminCategoryId);
+                ConstantsHandler constantsHandler = (ConstantsHandler)services.GetService(typeof(ConstantsHandler));
 
-                if ((bool)adminCategory?.Channels?.Any(channel => channel.Id == context.Channel.Id))
-                    return PreconditionResult.FromSuccess();
+                if (context.User is SocketGuildUser gUser)
+                {
+                    string adminCategoryId = constantsHandler.GetConstant(ConstantsNames.ADMIN_CATEGORY_ID);
+                    var adminCategory = (SocketCategoryChannel)(await context.Guild.GetCategoriesAsync())?.FirstOrDefault(w => w.Id.ToString() == adminCategoryId);
+
+                    if ((bool)adminCategory?.Channels?.Any(channel => channel.Id == context.Channel.Id))
+                        return PreconditionResult.FromSuccess();
+                    else
+                        return PreconditionResult.FromError($"You must be in admin category.");
+                }
                 else
-                    return PreconditionResult.FromError($"You must be in admin category.");
+                    return PreconditionResult.FromError("You must be in a guild to run this command.");
             }
-            else
-                return PreconditionResult.FromError("You must be in a guild to run this command.");
+            catch (Exception e)
+            {
+                throw;
+            }
         }
     }
 }

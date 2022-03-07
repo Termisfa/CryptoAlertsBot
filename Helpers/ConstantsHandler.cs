@@ -21,67 +21,96 @@ namespace CryptoAlertsBot
 
         private async void Initialize()
         {
-            constantsList = await _buildAndExeApiCall.GetAllTable<Constants>();
+            try
+            {
+                constantsList = await _buildAndExeApiCall.GetAllTable<Constants>();
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
         }
 
         public string GetConstant(string constantName)
         {
-            string result = constantsList.FirstOrDefault(constant => constant.Name.ToLower() == constantName.ToLower().Trim())?.Text;
-            return result;
+            try
+            {
+                string result = constantsList.FirstOrDefault(constant => constant.Name.ToLower() == constantName.ToLower().Trim())?.Text;
+                return result;
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
         }
 
         public async Task<bool> DeleteConstantAsync(string constantName)
         {
-            int deletedRows = await _buildAndExeApiCall.DeleteWithOneArgument("constants", "name", constantName);
-
-            if (deletedRows > 0)
+            try
             {
-                Initialize();
-                return true;
-            }
+                int deletedRows = await _buildAndExeApiCall.DeleteWithOneArgument("constants", "name", constantName);
 
-            return false;
+                if (deletedRows > 0)
+                {
+                    Initialize();
+                    return true;
+                }
+
+                return false;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         public bool UpdateConstant(string constantName, string value)
         {
-            Constants constant = constantsList.FirstOrDefault(w => w.Name.ToLower() == constantName.ToLower().Trim());
+            try
+            {
+                Constants constant = constantsList.FirstOrDefault(w => w.Name.ToLower() == constantName.ToLower().Trim());
 
-            if (constant == null)
-                return false;
+                if (constant == null)
+                    return false;
 
-            constant.Text = value;
+                constant.Text = value;
 
-            _ = _buildAndExeApiCall.PutWithOneArgument("constants", constant, "name", constantName);
+                _ = _buildAndExeApiCall.PutWithOneArgument("constants", constant, "name", constantName);
 
-            return true;
+                return true;
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
         }
 
         public bool AddConstant(string constantName, string value)
         {
-            Constants constant = constantsList.FirstOrDefault(w => w.Name.ToLower() == constantName.ToLower().Trim());
-
-            if (constant != null)
-                return false;
-
-            constant = new();
-            constant.Name = constantName;
-            constant.Text = value;
-
-            _ = _buildAndExeApiCall.Post("constants", constant);
-
-            return true;
+            try
+            {
+                Constants constant = constantsList.FirstOrDefault(w => w.Name.ToLower() == constantName.ToLower().Trim());
+                if (constant != null)
+                    return false;
+                constant = new();
+                constant.Name = constantName;
+                constant.Text = value;
+                _ = _buildAndExeApiCall.Post("constants", constant);
+                return true;
+            }
+            catch (Exception e) { throw; }
         }
 
         public string ListConstants()
         {
-            string result = string.Empty;
-
-            constantsList.ForEach(constant => result += $"{constant.Name}: `{constant.Text}`\n");
-
-            result = result.Substring(0, result.Length - 1); //To remove last \n
-
-            return result;
+            try
+            {
+                string result = string.Empty;
+                constantsList.ForEach(constant => result += $"{constant.Name}: `{constant.Text}`\n");
+                result = result.Substring(0, result.Length - 1);
+                return result;
+            }
+            catch (Exception e) { throw; }
         }
 
     }

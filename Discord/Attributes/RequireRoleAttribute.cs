@@ -11,15 +11,22 @@ namespace CryptoAlertsBot.Discord.Preconditions
 
         public override Task<PreconditionResult> CheckPermissionsAsync(ICommandContext context, CommandInfo command, IServiceProvider services)
         {
-            if (context.User is SocketGuildUser gUser)
+            try
             {
-                if (gUser.Roles.Any(r => r.Name == _name))
-                    return Task.FromResult(PreconditionResult.FromSuccess());
+                if (context.User is SocketGuildUser gUser)
+                {
+                    if (gUser.Roles.Any(r => r.Name == _name))
+                        return Task.FromResult(PreconditionResult.FromSuccess());
+                    else
+                        return Task.FromResult(PreconditionResult.FromError($"You must have a role named {_name} to run this command."));
+                }
                 else
-                    return Task.FromResult(PreconditionResult.FromError($"You must have a role named {_name} to run this command."));
+                    return Task.FromResult(PreconditionResult.FromError("You must be in a guild to run this command."));
             }
-            else
-                return Task.FromResult(PreconditionResult.FromError("You must be in a guild to run this command."));
+            catch (Exception e)
+            {
+                throw;
+            }
         }
     }
 }

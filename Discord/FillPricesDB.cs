@@ -57,125 +57,160 @@ namespace CryptoAlertsBot
 
         private async Task FillPrice(Coins coin)
         {
-            ResultPancakeSwapApi coinInfo = await _mostUsedApiCalls.GetFromPancakeSwapApi(_constantsHandler.GetConstant(ConstantsNames.URL_API), coin.Address);
-
-            Prices price = await UpdateDatabase(coin, coinInfo);
-
-            if (price != default)
+            try
             {
-                CheckAlerts(coin, coinInfo.Price);
-                UpdateResume(coin, price);
-            }
+                ResultPancakeSwapApi coinInfo = await _mostUsedApiCalls.GetFromPancakeSwapApi(_constantsHandler.GetConstant(ConstantsNames.URL_API), coin.Address);
 
+                Prices price = await UpdateDatabase(coin, coinInfo);
+
+                if (price != default)
+                {
+                    CheckAlerts(coin, coinInfo.Price);
+                    UpdateResume(coin, price);
+                }
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
         }
 
         private async Task<Prices> UpdateDatabase(Coins coin, ResultPancakeSwapApi coinInfo)
         {
-            var categoryChannelDb = _client.Guilds.First().CategoryChannels.First(w => w.Id == ulong.Parse(_constantsHandler.GetConstant(ConstantsNames.DB_CATEGORY_CHANNEL_ID)));
-
-            var coinChannel = categoryChannelDb.Channels.FirstOrDefault(w => w.Id == ulong.Parse(coin.IdChannel));
-
-            if (coinChannel == null)
-                throw new Exception($"El canal de la moneda `{coin.Name}:{coin.Address}` no existe");
-
-            Dictionary<string, string> parameters = new();
-            parameters.Add("coinAddress", coin.Address);
-            parameters.Add("priceDate", $"$(select max(priceDate) from prices where coinAddress = '{coin.Address}')");
-
-
-            var prices = await _buildAndExeApiCall.GetWithMultipleArguments<Prices>(parameters);
-            var previousPrice = prices.FirstOrDefault();
-
-            if (previousPrice != null && coinInfo.Updated_at <= previousPrice.PriceDate)
-                return default;
-
-            Prices price = new()
+            try
             {
-                CoinAddress = coin.Address,
-                PriceUsd = coinInfo.Price,
-                PriceDate = coinInfo.Updated_at,
-            };
+                var categoryChannelDb = _client.Guilds.First().CategoryChannels.First(w => w.Id == ulong.Parse(_constantsHandler.GetConstant(ConstantsNames.DB_CATEGORY_CHANNEL_ID)));
 
-            _ = _buildAndExeApiCall.Post("prices", price);
+                var coinChannel = categoryChannelDb.Channels.FirstOrDefault(w => w.Id == ulong.Parse(coin.IdChannel));
 
-            _ = (coinChannel as SocketTextChannel).SendMessageAsync(await _commonFunctionality.FormatPriceToDatabaseChannelAsync(price, previousPrice));
+                if (coinChannel == null)
+                    throw new Exception($"El canal de la moneda `{coin.Name}:{coin.Address}` no existe");
 
-            return price;
+                Dictionary<string, string> parameters = new();
+                parameters.Add("coinAddress", coin.Address);
+                parameters.Add("priceDate", $"$(select max(priceDate) from prices where coinAddress = '{coin.Address}')");
+
+                var prices = await _buildAndExeApiCall.GetWithMultipleArguments<Prices>(parameters);
+                var previousPrice = prices.FirstOrDefault();
+
+                if (previousPrice != null && coinInfo.Updated_at <= previousPrice.PriceDate)
+                {
+                    return default;
+                }
+
+                Prices price = new()
+                {
+                    CoinAddress = coin.Address,
+                    PriceUsd = coinInfo.Price,
+                    PriceDate = coinInfo.Updated_at,
+                };
+
+                _ = _buildAndExeApiCall.Post("prices", price);
+
+                _ = (coinChannel as SocketTextChannel).SendMessageAsync(await _commonFunctionality.FormatPriceToDatabaseChannelAsync(price, previousPrice));
+
+                return price;
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
         }
 
         private async void UpdateResume(Coins coin, Prices price)
         {
-            var alerts = (await _buildAndExeApiCall.GetWithOneArgument<Alerts>("coinAddress", coin.Address)).DistinctBy(w => w.UserId).ToList();
-
-            foreach (var alert in alerts)
+            try
             {
-                var categoryChannelId = await _commonFunctionality.GetCategoryChannelIdFromUserId(alert.UserId);
-                var resumeChannel = (SocketTextChannel)_client.Guilds.First().GetCategoryChannel(categoryChannelId).Channels?.FirstOrDefault(w => w.Name.Contains("resumen"));
+                var alerts = (await _buildAndExeApiCall.GetWithOneArgument<Alerts>("coinAddress", coin.Address)).DistinctBy(w => w.UserId).ToList();
 
-                await resumeChannel.DeleteMessagesAsync(await resumeChannel.GetMessagesAsync().Flatten().Where(w => w.Content.Contains(coin.Name)).ToListAsync());
+                foreach (var alert in alerts)
+                {
+                    var categoryChannelId = await _commonFunctionality.GetCategoryChannelIdFromUserId(alert.UserId);
+                    var resumeChannel = (SocketTextChannel)_client.Guilds.First().GetCategoryChannel(categoryChannelId).Channels?.FirstOrDefault(w => w.Name.Contains("resumen"));
 
-                _ = resumeChannel.SendMessageAsync(await _commonFunctionality.FormatPriceToResumeChannelAsync(coin, price, _constantsHandler.GetConstant(ConstantsNames.URL_POOCOIN)));
+                    await resumeChannel.DeleteMessagesAsync(await resumeChannel.GetMessagesAsync().Flatten().Where(w => w.Content.Contains(coin.Name)).ToListAsync());
+
+                    _ = resumeChannel.SendMessageAsync(await _commonFunctionality.FormatPriceToResumeChannelAsync(coin, price, _constantsHandler.GetConstant(ConstantsNames.URL_POOCOIN)));
+                }
+            }
+            catch (Exception e)
+            {
+                throw;
             }
         }
 
         private async void CheckAlerts(Coins coin, double price)
         {
-            Dictionary<string, string> arguments = new();
-            arguments.Add("coinAddress", coin.Address);
-            arguments.Add("userId", "$users.Id");
-            arguments.Add("active", "$true");
-
-            var alertsUsersList = await _buildAndExeApiCall.GetWithMultipleArguments<AlertsUsers>(arguments, "alerts,users");
-
-            foreach (var alertUser in alertsUsersList)
+            try
             {
-                if (Helpers.Helpers.IsGreaterOrLesserHandler(AlertsHelper.GetAlertSign(alertUser.Alert.AlertType), price, alertUser.Alert.PriceUsd))
+                Dictionary<string, string> arguments = new();
+                arguments.Add("coinAddress", coin.Address);
+                arguments.Add("userId", "$users.Id");
+                arguments.Add("active", "$true");
+
+                var alertsUsersList = await _buildAndExeApiCall.GetWithMultipleArguments<AlertsUsers>(arguments, "alerts,users");
+
+                foreach (var alertUser in alertsUsersList)
                 {
-                    if (alertUser.Alert.LastAlert == null)
-                        _ = NotifyAlert(alertUser, price, coin.IdChannel);
-                    else
+                    if (Helpers.Helpers.IsGreaterOrLesserHandler(AlertsHelper.GetAlertSign(alertUser.Alert.AlertType), price, alertUser.Alert.PriceUsd))
                     {
-                        double alertsCooldown = double.Parse(_constantsHandler.GetConstant(ConstantsNames.ALERTS_COOLDOWN));
-
-                        if ((DateTime.Now - alertUser.Alert.LastAlert.Value).TotalHours > alertsCooldown)
+                        if (alertUser.Alert.LastAlert == null)
+                            _ = NotifyAlert(alertUser, price, coin.IdChannel);
+                        else
                         {
-                            List<Prices> prices = (await _buildAndExeApiCall.GetWithOneArgument<Prices>("coinAddress", coin.Address)).Where(w => w.PriceDate >= alertUser.Alert.LastAlert.Value.AddHours(alertsCooldown)).ToList();
+                            double alertsCooldown = double.Parse(_constantsHandler.GetConstant(ConstantsNames.ALERTS_COOLDOWN));
 
-                            foreach (var priceRow in prices)
+                            if ((DateTime.Now - alertUser.Alert.LastAlert.Value).TotalHours > alertsCooldown)
                             {
-                                if (Helpers.Helpers.IsGreaterOrLesserHandler(AlertsHelper.GetAlertSign(alertUser.Alert.AlertType), alertUser.Alert.PriceUsd, priceRow.PriceUsd))
+                                List<Prices> prices = (await _buildAndExeApiCall.GetWithOneArgument<Prices>("coinAddress", coin.Address)).Where(w => w.PriceDate >= alertUser.Alert.LastAlert.Value.AddHours(alertsCooldown)).ToList();
+
+                                foreach (var priceRow in prices)
                                 {
-                                    await NotifyAlert(alertUser, price, coin.IdChannel);
-                                    break;
+                                    if (Helpers.Helpers.IsGreaterOrLesserHandler(AlertsHelper.GetAlertSign(alertUser.Alert.AlertType), alertUser.Alert.PriceUsd, priceRow.PriceUsd))
+                                    {
+                                        await NotifyAlert(alertUser, price, coin.IdChannel);
+                                        break;
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
+            catch (Exception e)
+            {
+                throw;
+            }
         }
 
         private Task NotifyAlert(AlertsUsers alertUser, double price, string coinChannelId)
         {
-            alertUser.Alert.LastAlert = DateTime.Now;
-            _ = _buildAndExeApiCall.PutWithOneArgument("alerts", alertUser.Alert, "id", alertUser.Alert.Id.ToString());
+            try
+            {
+                alertUser.Alert.LastAlert = DateTime.Now;
+                _ = _buildAndExeApiCall.PutWithOneArgument("alerts", alertUser.Alert, "id", alertUser.Alert.Id.ToString());
 
-            var categoryChannel = _client.Guilds.First().CategoryChannels.First(w => w.Id == ulong.Parse(alertUser.User.IdCategoryChannel));
+                var categoryChannel = _client.Guilds.First().CategoryChannels.First(w => w.Id == ulong.Parse(alertUser.User.IdCategoryChannel));
 
-            var alertsChannel = categoryChannel.Channels.FirstOrDefault(w => w.Name.Contains("alertas"));
+                var alertsChannel = categoryChannel.Channels.FirstOrDefault(w => w.Name.Contains("alertas"));
 
-            if (alertsChannel == null)
-                throw new Exception($"El canal de alertas del usuario '{alertUser.User.Name}' no existe");
+                if (alertsChannel == null)
+                    throw new Exception($"El canal de alertas del usuario '{alertUser.User.Name}' no existe");
 
-            var priceLength = int.Parse(_constantsHandler.GetConstant(ConstantsNames.PRICE_LENGTH));
-            string trimmedPrice = price.ToString();
-            if (trimmedPrice.Length > priceLength)
-                trimmedPrice = trimmedPrice.Substring(0, priceLength);
+                var priceLength = int.Parse(_constantsHandler.GetConstant(ConstantsNames.PRICE_LENGTH));
+                string trimmedPrice = price.ToString();
+                if (trimmedPrice.Length > priceLength)
+                    trimmedPrice = trimmedPrice.Substring(0, priceLength);
 
-            string upOrDown = alertUser.Alert.AlertType == AlertsEnum.Sube.ToString() ? $"subido" : "bajado";
+                string upOrDown = alertUser.Alert.AlertType == AlertsEnum.Sube.ToString() ? $"subido" : "bajado";
 
-            _ = (alertsChannel as SocketTextChannel).SendMessageAsync($"<@{alertUser.Alert.UserId}> La moneda {Helpers.Helpers.FormatChannelIdToDiscordFormat(coinChannelId)} ha {upOrDown} de `{alertUser.Alert.PriceUsd}`. Está en  `{trimmedPrice}` USD");
-            return Task.CompletedTask;
+                _ = (alertsChannel as SocketTextChannel).SendMessageAsync($"<@{alertUser.Alert.UserId}> La moneda {Helpers.Helpers.FormatChannelIdToDiscordFormat(coinChannelId)} ha {upOrDown} de `{alertUser.Alert.PriceUsd}`. Está en  `{trimmedPrice}` USD");
+                return Task.CompletedTask;
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
         }
     }
 }
