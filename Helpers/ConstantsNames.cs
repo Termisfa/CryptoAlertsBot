@@ -14,6 +14,5 @@ namespace CryptoAlertsBot
         public const string DB_CATEGORY_CHANNEL_ID = "dbCategoryChannelId";
         public const string LOG_CHANNEL_ID = "logChannelId";
         public const string ADMIN_CATEGORY_ID = "adminCategoryId";
-        public const string ALERTS_COOLDOWN = "alertsCooldown";
     }
 }

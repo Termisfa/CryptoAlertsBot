@@ -5,7 +5,6 @@ using CryptoAlertsBot.Models;
 using Discord.Interactions;
 using Discord.WebSocket;
 using System.Globalization;
-using static CryptoAlertsBot.Helpers.Helpers;
 
 namespace CryptoAlertsBot.Discord.Modules
 {
@@ -30,12 +29,15 @@ namespace CryptoAlertsBot.Discord.Modules
         public async Task NewAlert(
             [Summary("Canal", "Canal de la moneda. Ejemplo: #WBNB")][IsCoinChannel] SocketTextChannel coinChannel,
             [Summary("Precio", "Precio en USD para la alerta. Ejemplo: 1.23")] string priceString,
-            [Summary("Tipo", "Tipo de la alerta")] AlertsEnum alertType
+            [Summary("Tipo", "Tipo de la alerta")] AlertsEnum alertType,
+            [Summary("Tiempo", "Tiempo mínimo entre alertas")] TimeEnum timeBetweenAlerts
             )
         {
             try
             {
-                if ((await _mostUsedApiCalls.GetUserById(Context.User.Id.ToString())) == default)
+                string userId = Context.User.Id.ToString();
+
+                if ((await _mostUsedApiCalls.GetUserById(userId)) == default)
                 {
                     await RespondAsync("Error, para añadir una alerta primero debes darte de alta con el comando `!nuevousuario`");
                     return;
@@ -53,10 +55,11 @@ namespace CryptoAlertsBot.Discord.Modules
 
                 Alerts alert = new()
                 {
-                    UserId = Context.User.Id.ToString(),
+                    UserId = userId,
                     CoinAddress = coinAddress,
                     PriceUsd = price,
-                    AlertType = alertType.ToString()
+                    AlertType = alertType.ToString(),
+                    HoursBetweenAlerts = (int)timeBetweenAlerts
                 };
 
                 _ = await _buildAndExeApiCall.Post("alerts", alert);
@@ -97,7 +100,7 @@ namespace CryptoAlertsBot.Discord.Modules
                 else
                 {
                     await RespondAsync("Alerta eliminada");
-                    _commonFunctionality.UpdateAlertsResume(Context);
+                    await _commonFunctionality.UpdateAlertsResume(Context);
                 }
             }
             catch (Exception e)

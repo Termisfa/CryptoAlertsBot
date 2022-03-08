@@ -158,7 +158,7 @@ namespace CryptoAlertsBot
                             _ = NotifyAlert(alertUser, price, coin.IdChannel);
                         else
                         {
-                            double alertsCooldown = double.Parse(_constantsHandler.GetConstant(ConstantsNames.ALERTS_COOLDOWN));
+                            double alertsCooldown = alertUser.Alert.HoursBetweenAlerts;
 
                             if ((DateTime.Now - alertUser.Alert.LastAlert.Value).TotalHours > alertsCooldown)
                             {

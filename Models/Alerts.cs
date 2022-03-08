@@ -20,6 +20,9 @@ namespace CryptoAlertsBot.Models
         public string AlertType { get; set; }
 
         [Display(Order = 5)]
+        public int HoursBetweenAlerts { get; set; }
+
+        [Display(Order = 6)]
         public DateTime? LastAlert { get; set; }
     }
 }

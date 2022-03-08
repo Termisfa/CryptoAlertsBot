@@ -1,4 +1,5 @@
-﻿using CryptoAlertsBot.ApiHandler;
+﻿using CryptoAlertsBot.AlertsTypes;
+using CryptoAlertsBot.ApiHandler;
 using CryptoAlertsBot.Models;
 using CryptoAlertsBot.Models.MergedModels;
 using Discord.Interactions;
@@ -18,7 +19,7 @@ namespace CryptoAlertsBot.Discord
             _mostUsedApiCalls = mostUsedApiCalls;
         }
 
-        public async void UpdateAlertsResume(SocketInteractionContext context)
+        public async Task UpdateAlertsResume(SocketInteractionContext context)
         {
             try
             {
@@ -69,7 +70,12 @@ namespace CryptoAlertsBot.Discord
                 else
                 {
                     foreach (AlertsCoins alertCoin in queryResult)
-                        msg += "Moneda: <#" + alertCoin.Coin.IdChannel + "> PrecioUSD: `" + alertCoin.Alert.PriceUsd + "` Tipo de alerta: `" + alertCoin.Alert.AlertType + "`\n";
+                    {
+                        msg += "Moneda: <#" + alertCoin.Coin.IdChannel
+                            + ">. PrecioUSD: `" + alertCoin.Alert.PriceUsd
+                            + "`. Tipo de alerta: `" + alertCoin.Alert.AlertType
+                            + "`. Tiempo entre alertas: `" + ((TimeEnum)alertCoin.Alert.HoursBetweenAlerts).ToString() + "`\n";
+                    }
                 }
 
                 return msg;

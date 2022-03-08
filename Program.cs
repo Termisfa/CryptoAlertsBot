@@ -50,9 +50,9 @@ public partial class Program
     private ServiceProvider ConfigureServices()
     {
         return new ServiceCollection()
+            .AddSingleton<LogEvent>()
             .AddSingleton<DiscordSocketClient>()
             .AddSingleton<Logger>()
-            .AddSingleton<LogEvent>()
             .AddSingleton<LoggerEventListener>()
             .AddSingleton<BuildAndExeApiCall>()
             .AddSingleton<ConstantsHandler>()
