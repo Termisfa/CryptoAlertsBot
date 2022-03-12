@@ -71,7 +71,7 @@ namespace CryptoAlertsBot
             }
             catch (Exception e)
             {
-                throw;
+                _ = _logger.Log(exception: e);
             }
         }
 
@@ -84,7 +84,9 @@ namespace CryptoAlertsBot
                 var coinChannel = categoryChannelDb.Channels.FirstOrDefault(w => w.Id == ulong.Parse(coin.IdChannel));
 
                 if (coinChannel == null)
+                {
                     throw new Exception($"El canal de la moneda `{coin.Name}:{coin.Address}` no existe");
+                }
 
                 Dictionary<string, string> parameters = new();
                 parameters.Add("coinAddress", coin.Address);
@@ -105,7 +107,10 @@ namespace CryptoAlertsBot
                     PriceDate = coinInfo.Updated_at,
                 };
 
-                _ = _buildAndExeApiCall.Post("prices", price);
+                if(await _buildAndExeApiCall.Post("prices", price) != 1)
+                {
+                    return default;
+                }
 
                 _ = (coinChannel as SocketTextChannel).SendMessageAsync(await _commonFunctionality.FormatPriceToDatabaseChannelAsync(price, previousPrice));
 
@@ -113,7 +118,8 @@ namespace CryptoAlertsBot
             }
             catch (Exception e)
             {
-                throw;
+                _ = _logger.Log(exception: e);
+                return default;
             }
         }
 
@@ -135,7 +141,7 @@ namespace CryptoAlertsBot
             }
             catch (Exception e)
             {
-                throw;
+                _ = _logger.Log(exception: e);
             }
         }
 
@@ -179,7 +185,7 @@ namespace CryptoAlertsBot
             }
             catch (Exception e)
             {
-                throw;
+                _ = _logger.Log(exception: e);
             }
         }
 
@@ -209,7 +215,8 @@ namespace CryptoAlertsBot
             }
             catch (Exception e)
             {
-                throw;
+                _ = _logger.Log(exception: e);
+                return Task.CompletedTask;
             }
         }
     }

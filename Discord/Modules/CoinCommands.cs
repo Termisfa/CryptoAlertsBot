@@ -34,8 +34,8 @@ namespace CryptoAlertsBot.Discord.Modules
             {
                 coinAddress = coinAddress.ToLower().Trim();
 
-                var coins = await _buildAndExeApiCall.GetWithOneArgument<Coins>("address", coinAddress);
-                if (coins.Count != 0)
+                var coins = await _buildAndExeApiCall.GetAllTable<Coins>();
+                if (coins.Any(w => w.Address == coinAddress))
                 {
                     await RespondAsync($"La moneda <#{coins[0].IdChannel}> ya existe");
                     return;
