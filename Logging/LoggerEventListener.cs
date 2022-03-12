@@ -20,9 +20,12 @@ namespace CryptoAlertsBot
             _logEvent.FireEvent += new LogEvent.LogEventHandler(OnLogFired);
         }
 
-        private void OnLogFired(LogEvent m, EventArgs e, Response response)
+        private void OnLogFired(LogEvent m, EventArgs e, Response response = default, Exception exc = default)
         {
-            _logger.Log(response: response);
+            if (response != default)
+                _logger.Log(response: response);
+            else if(exc != default)
+                _logger.Log(exception: exc);
         }
     }
 }

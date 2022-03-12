@@ -11,10 +11,9 @@ namespace CryptoAlertsBot
         public ConstantsHandler(BuildAndExeApiCall buildAndExeApiCall)
         {
             _buildAndExeApiCall = buildAndExeApiCall;
-            Initialize();
         }
 
-        private async void Initialize()
+        public async Task InitializeAsync()
         {
             try
             {
@@ -47,7 +46,7 @@ namespace CryptoAlertsBot
 
                 if (deletedRows > 0)
                 {
-                    Initialize();
+                    InitializeAsync();
                     return true;
                 }
 

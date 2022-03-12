@@ -1,4 +1,5 @@
 ﻿using CryptoAlertsBot.ApiHandler.Models;
+using Discord;
 using Discord.WebSocket;
 using System.Diagnostics;
 
@@ -15,10 +16,8 @@ namespace CryptoAlertsBot
             _constantsHandler = constantsHandler;
         }
 
-        public Task Log(string msg = default, Exception exception = default, Response response = default)
+        public async Task Log(string msg = default, Exception exception = default, Response response = default)
         {
-            msg = DateTime.Now.ToString("HH:mm:ss dd/MM/yyyy") + "\n" + msg;
-
             if (exception != default)
             {
                 msg += exception.Message + "\n";
@@ -33,13 +32,19 @@ namespace CryptoAlertsBot
 
             msg += "\n" + new string('-', 50);
 
-            Console.WriteLine(msg);
+            string finalMsg = DateTime.Now.ToString("HH:mm:ss dd/MM/yyyy") + "\n" + msg;
 
-            var logChannel = ((SocketTextChannel)_client.GetChannel(ulong.Parse(_constantsHandler.GetConstant(ConstantsNames.LOG_CHANNEL_ID))));
-            if (logChannel != null)
-                logChannel.SendMessageAsync(msg);
+            Console.WriteLine(finalMsg);
 
-            return Task.CompletedTask;
+            string logChannelID = _constantsHandler.GetConstant(ConstantsNames.LOG_CHANNEL_ID);
+            if(!string.IsNullOrEmpty(logChannelID))
+            {
+                var logChannel = (SocketTextChannel)_client.GetChannel(ulong.Parse(logChannelID));
+                if (logChannel != null && !await logChannel.GetMessagesAsync(10).Flatten().AnyAsync(w => w.Content.Contains(msg)))
+                {
+                    _ = logChannel.SendMessageAsync(finalMsg);
+                }
+            }
         }
     }
 }

@@ -8,6 +8,7 @@ using Discord.Interactions;
 using Discord.Net;
 using Discord.WebSocket;
 using GenericApiHandler;
+using GenericApiHandler.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Configuration;
@@ -41,6 +42,9 @@ public partial class Program
             await _client.LoginAsync(TokenType.Bot, AppSettingsManager.GetDiscordBotKey());
             await _client.StartAsync();
 
+            _services.GetRequiredService<LoggerEventListener>().Initialize();
+            await _services.GetRequiredService<AuthToken>().InitializeAsync();
+            await _services.GetRequiredService<ConstantsHandler>().InitializeAsync();
             await _services.GetRequiredService<CommandHandler>().InitializeAsync();
 
             await Task.Delay(-1);
@@ -51,6 +55,7 @@ public partial class Program
     {
         return new ServiceCollection()
             .AddSingleton<LogEvent>()
+            .AddSingleton<AuthToken>()
             .AddSingleton<DiscordSocketClient>()
             .AddSingleton<Logger>()
             .AddSingleton<LoggerEventListener>()
@@ -79,7 +84,6 @@ public partial class Program
         Console.WriteLine($"Connected as -> [{_client.CurrentUser}] :)");
 
         _services.GetRequiredService<FillPricesDB>().Initialize();
-        _services.GetRequiredService<LoggerEventListener>().Initialize();
     }
 
     private async Task LogAsync(LogMessage log)
