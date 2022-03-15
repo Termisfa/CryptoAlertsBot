@@ -14,14 +14,14 @@ namespace CryptoAlertsBot
             return ConfigurationManager.AppSettings.Get("DiscordBotKey");
         }
 
+        public static string DiscordTestBotKey()
+        {
+            return ConfigurationManager.AppSettings.Get("DiscordTestBotKey");
+        }
+
         public static string GetConnectionString()
         {
             return ConfigurationManager.AppSettings.Get("ConnectionString");
-        }
-
-        public static string GetCryptoAllertsDiscordServerId()
-        {
-            return ConfigurationManager.AppSettings.Get("CryptoAllertsDiscordServerId");
         }
 
         public static string GetApiBaseAddress()

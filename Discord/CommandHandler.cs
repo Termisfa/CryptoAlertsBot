@@ -68,7 +68,9 @@ namespace CryptoAlertsBot.Discord
 
             int argPos = 0;
 
-            if (!(message.HasCharPrefix('!', ref argPos) ||
+            char botPrefix = !Helpers.Helpers.IsDebug() ? '%' : '!';
+
+            if (!(message.HasCharPrefix(botPrefix, ref argPos) ||
                 message.HasMentionPrefix(_client.CurrentUser, ref argPos)) ||
                 message.Author.IsBot)
                 return;

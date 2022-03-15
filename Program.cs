@@ -1,17 +1,14 @@
 ﻿using CryptoAlertsBot;
 using CryptoAlertsBot.ApiHandler;
 using CryptoAlertsBot.Discord;
-using CryptoAlertsBot.Discord.Modules;
+using CryptoAlertsBot.Helpers;
 using Discord;
 using Discord.Commands;
 using Discord.Interactions;
-using Discord.Net;
 using Discord.WebSocket;
 using GenericApiHandler;
 using GenericApiHandler.Authentication;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using System.Configuration;
 using System.Globalization;
 
 public partial class Program
@@ -39,7 +36,9 @@ public partial class Program
             _commands.Log += LogAsync;
             _client.Ready += ReadyAsync;
 
-            await _client.LoginAsync(TokenType.Bot, AppSettingsManager.GetDiscordBotKey());
+            string apiKey = !Helpers.IsDebug() ? AppSettingsManager.GetDiscordBotKey() : AppSettingsManager.DiscordTestBotKey();
+            await _client.LoginAsync(TokenType.Bot, apiKey);
+
             await _client.StartAsync();
 
             _services.GetRequiredService<LoggerEventListener>().Initialize();
@@ -72,15 +71,15 @@ public partial class Program
 
     private async Task ReadyAsync()
     {
-        if (IsDebug())
-        {
-            await _commands.RegisterCommandsToGuildAsync(ulong.Parse(AppSettingsManager.GetCryptoAllertsDiscordServerId()));
-        }
-        else
-        {
-            // this method will add commands globally, but can take around an hour
-            await _commands.RegisterCommandsGloballyAsync(true);
-        }
+        //if (IsDebug())
+        //{
+        //    await _commands.RegisterCommandsToGuildAsync(ulong.Parse(_services.GetRequiredService<ConstantsHandler>().GetConstant(ConstantsNames.SERVER_ID)));
+        //}
+        //else
+        //{
+        //    // this method will add commands globally, but can take around an hour
+        //    await _commands.RegisterCommandsGloballyAsync(true);
+        //}
         Console.WriteLine($"Connected as -> [{_client.CurrentUser}] :)");
 
         _services.GetRequiredService<FillPricesDB>().Initialize();
@@ -89,15 +88,6 @@ public partial class Program
     private async Task LogAsync(LogMessage log)
     {
         await _services.GetRequiredService<Logger>().Log(log.ToString());
-    }
-
-    static bool IsDebug()
-    {
-#if DEBUG
-        return true;
-#else
-                return false;
-#endif
     }
 }
 

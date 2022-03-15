@@ -116,6 +116,22 @@ namespace CryptoAlertsBot.Discord.Modules
             }
         }
 
+        //[Command("TEST")]
+        //[Alias("T")]
+        //public async Task Test([Remainder] string value)
+        //{
+        //    try
+        //    {
+        //        var x = await ApiCalls.ExeCall(GenericApiHandler.Data.Enums.ApiCallTypesEnum.Get, "/v1/currencies/ticker?key=c4b9d2f6d5933295ccce939ae2ff00abf10349d6&ids=BTC,ETH,XRP&interval=1d,30d&convert=EUR", baseAddress: "https://api.nomics.com");
+
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        _ = ReplyAsync("Ha ocurrido un error");
+        //        _ = _logger.Log(exception: e);
+        //    }
+        //}
+
 
         //ADD COMMAND TO DELETE USER ONLY FOR ADMIN. IT SHOULD DELETE ROLE, CHANNELS AND ALL HIS INFO IN THE DATABASE
 
