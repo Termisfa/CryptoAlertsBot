@@ -5,6 +5,8 @@ using CryptoAlertsBot.Discord;
 using CryptoAlertsBot.Models.MergedModels;
 using CryptoAlertsBot.AlertsTypes;
 using Discord;
+using GenericApiHandler.Models;
+using System.Globalization;
 
 namespace CryptoAlertsBot
 {
@@ -59,6 +61,10 @@ namespace CryptoAlertsBot
         {
             try
             {
+                CultureInfo culture = new CultureInfo("es-ES");
+                Thread.CurrentThread.CurrentCulture = culture;
+                Thread.CurrentThread.CurrentUICulture = culture;
+
                 ResultPancakeSwapApi coinInfo = await _mostUsedApiCalls.GetFromPancakeSwapApi(_constantsHandler.GetConstant(ConstantsNames.URL_API), coin.Address);
 
                 Prices price = await UpdateDatabase(coin, coinInfo);
@@ -88,11 +94,11 @@ namespace CryptoAlertsBot
                     throw new Exception($"El canal de la moneda `{coin.Name}:{coin.Address}` no existe");
                 }
 
-                Dictionary<string, string> parameters = new();
-                parameters.Add("coinAddress", coin.Address);
-                parameters.Add("priceDate", $"$(select max(priceDate) from prices where coinAddress = '{coin.Address}')");
+                List<HttpParameter> parameters = new();
+                parameters.Add(HttpParameter.DefaultParameter("coinAddress", coin.Address));
+                parameters.Add(HttpParameter.ParameterWithoutApostrophes("priceDate", $"(select max(priceDate) from prices where coinAddress = '{coin.Address}')"));
 
-                var prices = await _buildAndExeApiCall.GetWithMultipleArguments<Prices>(parameters);
+                var prices = await _buildAndExeApiCall.GetWithMultipleParameters<Prices>(parameters);
                 var previousPrice = prices.FirstOrDefault();
 
                 if (previousPrice != null && coinInfo.Updated_at <= previousPrice.PriceDate)
@@ -127,7 +133,7 @@ namespace CryptoAlertsBot
         {
             try
             {
-                var alerts = (await _buildAndExeApiCall.GetWithOneArgument<Alerts>("coinAddress", coin.Address)).DistinctBy(w => w.UserId).ToList();
+                var alerts = (await _buildAndExeApiCall.GetWithOneParameter<Alerts>(HttpParameter.DefaultParameter("coinAddress", coin.Address))).DistinctBy(w => w.UserId).ToList();
 
                 foreach (var alert in alerts)
                 {
@@ -149,12 +155,12 @@ namespace CryptoAlertsBot
         {
             try
             {
-                Dictionary<string, string> arguments = new();
-                arguments.Add("coinAddress", coin.Address);
-                arguments.Add("userId", "$users.Id");
-                arguments.Add("active", "$true");
+                List<HttpParameter> parameters = new();
+                parameters.Add(HttpParameter.DefaultParameter("coinAddress", coin.Address));
+                parameters.Add(HttpParameter.ParameterWithoutApostrophes("userId", "users.Id"));
+                parameters.Add(HttpParameter.ParameterWithoutApostrophes("active", "true"));
 
-                var alertsUsersList = await _buildAndExeApiCall.GetWithMultipleArguments<AlertsUsers>(arguments, "alerts,users");
+                var alertsUsersList = await _buildAndExeApiCall.GetWithMultipleParameters<AlertsUsers>(parameters, "alerts,users");
 
                 foreach (var alertUser in alertsUsersList)
                 {
@@ -168,7 +174,7 @@ namespace CryptoAlertsBot
 
                             if ((DateTime.Now - alertUser.Alert.LastAlert.Value).TotalHours > alertsCooldown)
                             {
-                                List<Prices> prices = (await _buildAndExeApiCall.GetWithOneArgument<Prices>("coinAddress", coin.Address)).Where(w => w.PriceDate >= alertUser.Alert.LastAlert.Value.AddHours(alertsCooldown)).ToList();
+                                List<Prices> prices = (await _buildAndExeApiCall.GetWithOneParameter<Prices>(HttpParameter.DefaultParameter("coinAddress", coin.Address))).Where(w => w.PriceDate >= alertUser.Alert.LastAlert.Value.AddHours(alertsCooldown)).ToList();
 
                                 foreach (var priceRow in prices)
                                 {
@@ -194,7 +200,7 @@ namespace CryptoAlertsBot
             try
             {
                 alertUser.Alert.LastAlert = DateTime.Now;
-                _ = _buildAndExeApiCall.PutWithOneArgument("alerts", alertUser.Alert, "id", alertUser.Alert.Id.ToString());
+                _ = _buildAndExeApiCall.PutWithOneParameter("alerts", alertUser.Alert, HttpParameter.DefaultParameter("id", alertUser.Alert.Id.ToString()));
 
                 var categoryChannel = _client.Guilds.First().CategoryChannels.First(w => w.Id == ulong.Parse(alertUser.User.IdCategoryChannel));
 

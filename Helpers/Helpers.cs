@@ -35,11 +35,11 @@ namespace CryptoAlertsBot.Helpers
             }
         }
 
-        public static string FormatChannelIdToNumberFormat(string formatedChannelId)
+        public static string FormatUserIdToNumberFormat(string userID)
         {
             try
             {
-                string result = formatedChannelId.Replace("<", "").Replace(">", "").Replace("#", "");
+                string result = userID.Replace("<", "").Replace(">", "").Replace("@", "").Replace("!", "");
                 return result;
             }
             catch (Exception e) { throw; }
@@ -78,12 +78,12 @@ namespace CryptoAlertsBot.Helpers
             }
         }
 
-        public static bool IsDebug()
+        public static bool IsRelease()
         {
 #if DEBUG
-            return true;
+            return false;
 #else
-                return false;
+                return true;
 #endif
         }
     }

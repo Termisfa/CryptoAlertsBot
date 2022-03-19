@@ -1,9 +1,11 @@
 ﻿using CryptoAlertsBot.AlertsTypes;
 using CryptoAlertsBot.ApiHandler;
 using CryptoAlertsBot.Discord.Preconditions;
+using CryptoAlertsBot.Models;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using GenericApiHandler.Models;
 using static CryptoAlertsBot.Helpers.Helpers;
 
 namespace CryptoAlertsBot.Discord.Modules
@@ -14,11 +16,15 @@ namespace CryptoAlertsBot.Discord.Modules
     {
         private readonly ConstantsHandler _constantsHandler;
         private readonly Logger _logger;
+        private readonly MostUsedApiCalls _mostUsedApiCalls;
+        private readonly BuildAndExeApiCall _buildAndExeApiCall;
 
-        public AdminCommands(ConstantsHandler constantsHandler, Logger logger)
+        public AdminCommands(ConstantsHandler constantsHandler, Logger logger, MostUsedApiCalls mostUsedApiCalls, BuildAndExeApiCall buildAndExeApiCall)
         {
             _constantsHandler = constantsHandler;
             _logger = logger;
+            _mostUsedApiCalls = mostUsedApiCalls;
+            _buildAndExeApiCall = buildAndExeApiCall;
         }
 
         [Command("CLEAR")]
@@ -34,7 +40,6 @@ namespace CryptoAlertsBot.Discord.Modules
                 var m = await this.ReplyAsync($"Purge completed. _This message will be deleted in {delay / 1000} seconds._");
                 await Task.Delay(delay);
                 await m.DeleteAsync();
-
             }
             catch (Exception e)
             {
@@ -53,7 +58,6 @@ namespace CryptoAlertsBot.Discord.Modules
                     _ = ReplyAsync("Constante añadida con éxito");
                 else
                     _ = ReplyAsync("La constante ya existe");
-
             }
             catch (Exception e)
             {
@@ -69,7 +73,6 @@ namespace CryptoAlertsBot.Discord.Modules
             try
             {
                 _ = ReplyAsync(_constantsHandler.ListConstants());
-
             }
             catch (Exception e)
             {
@@ -88,7 +91,6 @@ namespace CryptoAlertsBot.Discord.Modules
                     _ = ReplyAsync("Constante eliminada con éxito");
                 else
                     _ = ReplyAsync("La constante no existe");
-
             }
             catch (Exception e)
             {
@@ -107,7 +109,44 @@ namespace CryptoAlertsBot.Discord.Modules
                     _ = ReplyAsync("Constante actualizada con éxito");
                 else
                     _ = ReplyAsync("La constante no existe");
+            }
+            catch (Exception e)
+            {
+                _ = ReplyAsync("Ha ocurrido un error");
+                _ = _logger.Log(exception: e);
+            }
+        }
 
+        [Command("DELETEUSER")]
+        [Alias("BORRARUSUARIO", "USERDELETE")]
+        public async Task DeleteUser(string user)
+        {
+            try
+            {
+                string userId = Helpers.Helpers.FormatUserIdToNumberFormat(user);
+                Users userInfo = await _mostUsedApiCalls.GetUserById(userId);
+
+                if (userInfo == null)
+                {
+                    _ = ReplyAsync("El usuario no existe");
+                    return;
+                }
+
+                var categoryChannel = Context.Guild.CategoryChannels.First(w => w.Id == ulong.Parse(userInfo.IdCategoryChannel));
+
+                ulong roleId = categoryChannel.PermissionOverwrites.FirstOrDefault(w => !Context.Guild.GetRole(w.TargetId).IsEveryone).TargetId;
+                _ = Context.Guild.GetRole(roleId).DeleteAsync();
+
+                foreach (var channel in categoryChannel.Channels)
+                {
+                    await channel.DeleteAsync();
+                }
+                _ = categoryChannel.DeleteAsync();
+
+                _ = _buildAndExeApiCall.DeleteWithOneParameter("users", HttpParameter.DefaultParameter("Id", userId));
+                _ = _buildAndExeApiCall.DeleteWithOneParameter("alerts", HttpParameter.DefaultParameter("UserId", userId));
+
+                _ = ReplyAsync("Usuario completamente eliminado con éxito");
             }
             catch (Exception e)
             {
@@ -131,9 +170,5 @@ namespace CryptoAlertsBot.Discord.Modules
         //        _ = _logger.Log(exception: e);
         //    }
         //}
-
-
-        //ADD COMMAND TO DELETE USER ONLY FOR ADMIN. IT SHOULD DELETE ROLE, CHANNELS AND ALL HIS INFO IN THE DATABASE
-
     }
 }

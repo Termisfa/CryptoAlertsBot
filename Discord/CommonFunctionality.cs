@@ -4,6 +4,7 @@ using CryptoAlertsBot.Models;
 using CryptoAlertsBot.Models.MergedModels;
 using Discord.Interactions;
 using Discord.WebSocket;
+using GenericApiHandler.Models;
 
 namespace CryptoAlertsBot.Discord
 {
@@ -57,11 +58,11 @@ namespace CryptoAlertsBot.Discord
         {
             try
             {
-                Dictionary<string, string> arguments = new();
-                arguments.Add("coinAddress", "$address");
-                arguments.Add("userId", context.User.Id.ToString());
+                List<HttpParameter> parameters = new();
+                parameters.Add(HttpParameter.ParameterWithoutApostrophes( "coinAddress", "address"));
+                parameters.Add(HttpParameter.DefaultParameter("userId", context.User.Id.ToString()));
 
-                var queryResult = await _buildAndExeApiCall.GetWithMultipleArguments<AlertsCoins>(arguments, "alerts,coins");
+                var queryResult = await _buildAndExeApiCall.GetWithMultipleParameters<AlertsCoins>(parameters, "alerts,coins");
 
                 string msg = "Resumen de alertas actuales: \n";
 

@@ -5,6 +5,7 @@ using CryptoAlertsBot.Models;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using GenericApiHandler.Models;
 using static CryptoAlertsBot.Helpers.Helpers;
 
 namespace CryptoAlertsBot.Discord.Modules
@@ -32,12 +33,14 @@ namespace CryptoAlertsBot.Discord.Modules
         {
             try
             {
+                await DeferAsync();
+
                 coinAddress = coinAddress.ToLower().Trim();
 
                 var coins = await _buildAndExeApiCall.GetAllTable<Coins>();
                 if (coins.Any(w => w.Address == coinAddress))
                 {
-                    await RespondAsync($"La moneda <#{coins[0].IdChannel}> ya existe");
+                    await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = $"La moneda <#{coins[0].IdChannel}> ya existe"; });
                     return;
                 }
 
@@ -45,7 +48,7 @@ namespace CryptoAlertsBot.Discord.Modules
                 ResultPancakeSwapApi coinInfo = await _mostUsedApiCalls.GetFromPancakeSwapApi(urlApi, coinAddress);
                 if (coinInfo == default)
                 {
-                    await RespondAsync($"La moneda '{coinAddress}' no existe en PancakeSwap");
+                    await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = $"La moneda '{coinAddress}' no existe en PancakeSwap"; });
                     return;
                 }
 
@@ -64,11 +67,11 @@ namespace CryptoAlertsBot.Discord.Modules
                 };
                 _ = _buildAndExeApiCall.Post("coins", coin);
 
-                await RespondAsync($"Moneda <#{coinChannel.Id}> añadida con éxito");
+                await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = $"Moneda <#{coinChannel.Id}> añadida con éxito"; });
             }
             catch (Exception e)
             {
-                _ = RespondAsync("Ha ocurrido un error");
+                await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = "Ha ocurrido un error"; });
                 _ = _logger.Log(exception: e);
             }
         }
@@ -80,27 +83,25 @@ namespace CryptoAlertsBot.Discord.Modules
         {
             try
             {
-                var listAlerts = await _buildAndExeApiCall.GetWithOneArgument<Alerts>("coinAddress", $"$(select address from coins where idChannel = '{coinChannel.Id}')");
+                await DeferAsync();
+
+                var listAlerts = await _buildAndExeApiCall.GetWithOneParameter<Alerts>(HttpParameter.ParameterWithoutApostrophes("coinAddress", $"(select address from coins where idChannel = '{coinChannel.Id}')"));
                 if (listAlerts.Count != 0)
                 {
-                    await RespondAsync("No se puede eliminar una moneda que tiene alertas activas de algún usuario");
+                    await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = "No se puede eliminar una moneda que tiene alertas activas de algún usuario"; });
                     return;
                 }
 
                 _ = coinChannel.DeleteAsync();
-                _ = _buildAndExeApiCall.DeleteWithOneArgument("coins", "idChannel", coinChannel.Id.ToString());
+                _ = _buildAndExeApiCall.DeleteWithOneParameter("coins", HttpParameter.DefaultParameter("idChannel", coinChannel.Id.ToString()));
 
-                await RespondAsync($"Moneda eliminada con éxito");
+                await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = $"Moneda eliminada con éxito"; });
             }
             catch (Exception e)
             {
-                _ = RespondAsync("Ha ocurrido un error");
+                await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = "Ha ocurrido un error"; });
                 _ = _logger.Log(exception: e);
             }
         }
-
-
-        //public async Task NewUser([Remainder][Summary("The text to echo")] string echo)
-
     }
 }

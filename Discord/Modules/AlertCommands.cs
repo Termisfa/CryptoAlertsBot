@@ -35,17 +35,19 @@ namespace CryptoAlertsBot.Discord.Modules
         {
             try
             {
+                await DeferAsync();
+
                 string userId = Context.User.Id.ToString();
 
                 if ((await _mostUsedApiCalls.GetUserById(userId)) == default)
                 {
-                    await RespondAsync("Error, para añadir una alerta primero debes darte de alta con el comando `!nuevousuario`");
+                    await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = "Error, para añadir una alerta primero debes darte de alta con el comando `!nuevousuario`"; });
                     return;
                 }
 
                 if (!double.TryParse(priceString.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out double price))
                 {
-                    await RespondAsync($"Error, el precio `{priceString}` no es válido");
+                    await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = $"Error, el precio `{priceString}` no es válido"; });
                     return;
                 }
 
@@ -64,12 +66,12 @@ namespace CryptoAlertsBot.Discord.Modules
 
                 _ = await _buildAndExeApiCall.Post("alerts", alert);
 
-                await RespondAsync("Alerta añadida con éxito");
+                await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = "Alerta añadida con éxito"; });
                 _commonFunctionality.UpdateAlertsResume(Context);
             }
             catch (Exception e)
             {
-                _ = RespondAsync("Ha ocurrido un error");
+                await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = "Ha ocurrido un error"; });
                 _ = _logger.Log(exception: e);
             }
         }
@@ -83,9 +85,11 @@ namespace CryptoAlertsBot.Discord.Modules
         {
             try
             {
+                await DeferAsync();
+
                 if (!double.TryParse(priceString.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out double price))
                 {
-                    await RespondAsync($"Error, el precio `{priceString}` no es válido");
+                    await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = $"Error, el precio `{priceString}` no es válido"; });
                     return;
                 }
 
@@ -96,16 +100,18 @@ namespace CryptoAlertsBot.Discord.Modules
                 int deletedRows = await _mostUsedApiCalls.DeleteAlert(Context.User.Id.ToString(), coinAddress, price.ToString(), alertType.ToString());
 
                 if (deletedRows == 0)
-                    await RespondAsync("No se ha encontrado la alerta");
+                {
+                    await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = "No se ha encontrado la alerta"; });
+                }
                 else
                 {
-                    await RespondAsync("Alerta eliminada");
+                    await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = "Alerta eliminada"; });
                     await _commonFunctionality.UpdateAlertsResume(Context);
                 }
             }
             catch (Exception e)
             {
-                _ = RespondAsync("Ha ocurrido un error");
+                await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = "Ha ocurrido un error"; });
                 _ = _logger.Log(exception: e);
             }
         }
@@ -115,11 +121,13 @@ namespace CryptoAlertsBot.Discord.Modules
         {
             try
             {
-                _ = RespondAsync(await _commonFunctionality.GetAlertsMsg(Context));
+                await DeferAsync();
+
+                await ModifyOriginalResponseAsync(async (responseMsg) => { responseMsg.Content = await _commonFunctionality.GetAlertsMsg(Context); });
             }
             catch (Exception e)
             {
-                _ = RespondAsync("Ha ocurrido un error");
+                await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = "Ha ocurrido un error"; });
                 _ = _logger.Log(exception: e);
             }
         }

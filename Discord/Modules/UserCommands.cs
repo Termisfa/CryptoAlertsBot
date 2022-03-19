@@ -3,6 +3,7 @@ using CryptoAlertsBot.Models;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using GenericApiHandler.Models;
 using static CryptoAlertsBot.Helpers.Helpers;
 
 namespace CryptoAlertsBot.Discord.Modules
@@ -25,18 +26,22 @@ namespace CryptoAlertsBot.Discord.Modules
         {
             try
             {
+                await DeferAsync();
+
                 var userId = Context.User.Id.ToString();
                 Users user = await _mostUsedApiCalls.GetUserById(userId);
 
                 if (user != default)
                 {
                     if (user.Active)
-                        await RespondAsync($"El usuario <@{userId}> ya estaba activo");
+                    {
+                        await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = $"El usuario <@{userId}> ya estaba activo"; });
+                    }
                     else
                     {
                         user.Active = true;
                         await _mostUsedApiCalls.UpdateUserById(userId, user);
-                        await RespondAsync($"Usuario <@{userId}> reactivado");
+                        await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = $"Usuario <@{ userId}> reactivado"; });
                     }
                     return;
                 }
@@ -48,7 +53,7 @@ namespace CryptoAlertsBot.Discord.Modules
                 _ = categoryChannel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, OverwritePermissions.DenyAll(categoryChannel));
                 _ = categoryChannel.AddPermissionOverwriteAsync(role, OverwritePermissions.AllowAll(categoryChannel));
 
-                _ =Context.Guild.CreateTextChannelAsync("alertas-" + Context.User.Username, tcp => tcp.CategoryId = categoryChannel.Id);
+                _ = Context.Guild.CreateTextChannelAsync("alertas-" + Context.User.Username, tcp => tcp.CategoryId = categoryChannel.Id);
                 _ = Context.Guild.CreateTextChannelAsync("resumen-" + Context.User.Username, tcp => tcp.CategoryId = categoryChannel.Id);
 
                 user = new()
@@ -62,13 +67,15 @@ namespace CryptoAlertsBot.Discord.Modules
                 var affectedRows = await _buildAndExeApiCall.Post("users", user);
 
                 if (affectedRows == 1)
-                    await RespondAsync($"Usuario <@{userId}> añadido con éxito");
+                {
+                    await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = $"Usuario <@{ userId}> añadido con éxito"; });
+                }
                 else
-                    await RespondAsync("Ha ocurrido un error");
+                    await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = "Ha ocurrido un error"; });
             }
             catch (Exception e)
             {
-                _ = RespondAsync("Ha ocurrido un error");
+                await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = "Ha ocurrido un error"; });
                 _ = _logger.Log(exception: e);
             }
         }
@@ -78,6 +85,8 @@ namespace CryptoAlertsBot.Discord.Modules
         {
             try
             {
+                await DeferAsync();
+
                 var userId = Context.User.Id.ToString();
 
                 Users user = new()
@@ -85,57 +94,18 @@ namespace CryptoAlertsBot.Discord.Modules
                     Active = false
                 };
 
-                var affectedRows = await _buildAndExeApiCall.PutWithOneArgument("users", user, "id", userId);
+                var affectedRows = await _buildAndExeApiCall.PutWithOneParameter("users", user, HttpParameter.DefaultParameter("id", userId));
 
                 if (affectedRows != 1)
-                    await RespondAsync($"El usuario <@{userId}> no estaba dado de alta");
+                    await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = $"El usuario <@{userId}> no estaba dado de alta"; });
                 else
-                    await RespondAsync($"Usuario <@{userId}> dado de baja con éxito");
+                    await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = $"Usuario <@{userId}> dado de baja con éxito"; });
             }
             catch (Exception e)
             {
-                _ = RespondAsync("Ha ocurrido un error");
+                await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = "Ha ocurrido un error"; });
                 _ = _logger.Log(exception: e);
             }
         }
-
-
-
-        //public async Task NewUser([Remainder][Summary("The text to echo")] string echo)
-
     }
-
- //   // Create a module with the 'sample' prefix
- //   [Group("sample")]
-	//public class SampleModule : ModuleBase<SocketCommandContext>
-	//{
-	//	// ~sample square 20 -> 400
-	//	[Command("square")]
-	//	[Summary("Squares a number.")]
-	//	public async Task SquareAsync(
-	//		[Summary("The number to square.")]
-	//	int num)
-	//	{
-	//		// We can also access the channel from the Command Context.
-	//		await Context.Channel.SendMessageAsync($"{num}^2 = {Math.Pow(num, 2)}");
-	//	}
-
-	//	// ~sample userinfo --> foxbot#0282
-	//	// ~sample userinfo @Khionu --> Khionu#8708
-	//	// ~sample userinfo Khionu#8708 --> Khionu#8708
-	//	// ~sample userinfo Khionu --> Khionu#8708
-	//	// ~sample userinfo 96642168176807936 --> Khionu#8708
-	//	// ~sample whois 96642168176807936 --> Khionu#8708
-	//	[Command("userinfo")]
-	//	[Summary
-	//	("Returns info about the current user, or the user parameter, if one passed.")]
-	//	[Alias("user", "whois")]
-	//	public async Task UserInfoAsync(
-	//		[Summary("The (optional) user to get info from")]
-	//	SocketUser user = null)
-	//	{
-	//		var userInfo = user ?? Context.Client.CurrentUser;
-	//		await await RespondAsync($"{userInfo.Username}#{userInfo.Discriminator}");
-	//	}
-	//}
 }

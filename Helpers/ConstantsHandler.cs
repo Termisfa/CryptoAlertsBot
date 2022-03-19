@@ -1,5 +1,6 @@
 ﻿using CryptoAlertsBot.ApiHandler;
 using CryptoAlertsBot.Models;
+using GenericApiHandler.Models;
 
 namespace CryptoAlertsBot
 {
@@ -42,7 +43,7 @@ namespace CryptoAlertsBot
         {
             try
             {
-                int deletedRows = await _buildAndExeApiCall.DeleteWithOneArgument("constants", "name", constantName);
+                int deletedRows = await _buildAndExeApiCall.DeleteWithOneParameter("constants", HttpParameter.DefaultParameter("name", constantName));
 
                 if (deletedRows > 0)
                 {
@@ -69,7 +70,7 @@ namespace CryptoAlertsBot
 
                 constant.Text = value;
 
-                _ = _buildAndExeApiCall.PutWithOneArgument("constants", constant, "name", constantName);
+                _ = _buildAndExeApiCall.PutWithOneParameter("constants", constant, HttpParameter.DefaultParameter("name", constantName));
 
                 return true;
             }

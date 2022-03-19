@@ -36,7 +36,7 @@ public partial class Program
             _commands.Log += LogAsync;
             _client.Ready += ReadyAsync;
 
-            string apiKey = !Helpers.IsDebug() ? AppSettingsManager.GetDiscordBotKey() : AppSettingsManager.DiscordTestBotKey();
+            string apiKey = Helpers.IsRelease() ? AppSettingsManager.GetDiscordBotKey() : AppSettingsManager.DiscordTestBotKey();
             await _client.LoginAsync(TokenType.Bot, apiKey);
 
             await _client.StartAsync();
@@ -45,6 +45,7 @@ public partial class Program
             await _services.GetRequiredService<AuthToken>().InitializeAsync();
             await _services.GetRequiredService<ConstantsHandler>().InitializeAsync();
             await _services.GetRequiredService<CommandHandler>().InitializeAsync();
+            _services.GetRequiredService<ClearPricesTable>().Initialize();
 
             await Task.Delay(-1);
         }
@@ -66,6 +67,7 @@ public partial class Program
             .AddSingleton<FillPricesDB>()
             .AddSingleton<MostUsedApiCalls>()
             .AddSingleton<CommonFunctionality>()
+            .AddSingleton<ClearPricesTable>()
             .BuildServiceProvider();
     }
 

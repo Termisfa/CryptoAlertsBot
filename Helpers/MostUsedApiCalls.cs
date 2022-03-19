@@ -2,6 +2,7 @@
 using System.Text.Json;
 using CryptoAlertsBot.ApiHandler;
 using GenericApiHandler.Data.Enums;
+using GenericApiHandler.Models;
 
 namespace CryptoAlertsBot
 {
@@ -18,7 +19,7 @@ namespace CryptoAlertsBot
         {
             try
             {
-                List<Users> users = await _buildAndExeApiCall.GetWithOneArgument<Users>("id", userId);
+                List<Users> users = await _buildAndExeApiCall.GetWithOneParameter<Users>(HttpParameter.DefaultParameter("id", userId));
 
                 if (users.Count == 1)
                     return users[0];
@@ -35,7 +36,7 @@ namespace CryptoAlertsBot
         {
             try
             {
-                int affectedRows = await _buildAndExeApiCall.PutWithOneArgument("users", user, "id", userId);
+                int affectedRows = await _buildAndExeApiCall.PutWithOneParameter("users", user, HttpParameter.DefaultParameter("id", userId));
 
                 if (affectedRows != 1)
                 {
@@ -52,7 +53,7 @@ namespace CryptoAlertsBot
         {
             try
             {
-                List<Coins> coins = await _buildAndExeApiCall.GetWithOneArgument<Coins>("address", address);
+                List<Coins> coins = await _buildAndExeApiCall.GetWithOneParameter<Coins>(HttpParameter.DefaultParameter("address", address));
                 if (coins.Count == 1)
                     return coins[0];
                 return default;
@@ -64,13 +65,13 @@ namespace CryptoAlertsBot
         {
             try
             {
-                Dictionary<string, string> parameters = new();
-                parameters.Add("userId", userId);
-                parameters.Add("coinAddress", coinAddress);
-                parameters.Add("priceUsd", priceUsd);
-                parameters.Add("alertType", alertType);
+                List<HttpParameter> parameters = new();
+                parameters.Add(HttpParameter.DefaultParameter("userId", userId));
+                parameters.Add(HttpParameter.DefaultParameter("coinAddress", coinAddress));
+                parameters.Add(HttpParameter.DefaultParameter("priceUsd", priceUsd));
+                parameters.Add(HttpParameter.DefaultParameter("alertType", alertType));
 
-                int result = await _buildAndExeApiCall.DeleteWithMultipleArguments("Alerts", parameters);
+                int result = await _buildAndExeApiCall.DeleteWithMultipleParameters("Alerts", parameters);
 
                 return result;
             }
@@ -84,7 +85,7 @@ namespace CryptoAlertsBot
         {
             try
             {
-                var constants = await _buildAndExeApiCall.GetWithOneArgument<Constants>("name", name);
+                var constants = await _buildAndExeApiCall.GetWithOneParameter<Constants>(HttpParameter.DefaultParameter("name", name));
                 if (constants.Count != 1)
                 {
                     throw new Exception("Error in GetConstantByName. Name provided: " + name);
