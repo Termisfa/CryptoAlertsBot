@@ -2,6 +2,7 @@
 using CryptoAlertsBot.ApiHandler;
 using CryptoAlertsBot.Discord.Preconditions;
 using CryptoAlertsBot.Models;
+using CryptoAlertsBot.Models.PancakeSwap;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;

@@ -1,32 +1,18 @@
-﻿using Discord.WebSocket;
-using CryptoAlertsBot.ApiHandler;
-using CryptoAlertsBot.Models;
-using CryptoAlertsBot.Discord;
-using CryptoAlertsBot.Models.MergedModels;
-using CryptoAlertsBot.AlertsTypes;
-using Discord;
+﻿using CryptoAlertsBot.ApiHandler;
 using GenericApiHandler.Models;
 using GenericApiHandler.Data.Enums;
 
-namespace CryptoAlertsBot
+namespace CryptoAlertsBot.RepetitiveTasks
 {
     public class ClearPricesTable
     {
-        private readonly DiscordSocketClient _client;
-        private readonly ConstantsHandler _constantsHandler;
         private readonly Logger _logger;
         private readonly BuildAndExeApiCall _buildAndExeApiCall;
-        private readonly MostUsedApiCalls _mostUsedApiCalls;
-        private readonly CommonFunctionality _commonFunctionality;
 
-        public ClearPricesTable(DiscordSocketClient client, ConstantsHandler constantsHandler, Logger logger, BuildAndExeApiCall buildAndExeApiCall, MostUsedApiCalls mostUsedApiCalls, CommonFunctionality commonFunctionality)
+        public ClearPricesTable(Logger logger, BuildAndExeApiCall buildAndExeApiCall)
         {
-            _client = client;
-            _constantsHandler = constantsHandler;
             _logger = logger;
             _buildAndExeApiCall = buildAndExeApiCall;
-            _mostUsedApiCalls = mostUsedApiCalls;
-            _commonFunctionality = commonFunctionality;
         }
 
         public void Initialize()

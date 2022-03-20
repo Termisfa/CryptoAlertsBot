@@ -2,12 +2,14 @@
 using CryptoAlertsBot.ApiHandler;
 using CryptoAlertsBot.Discord;
 using CryptoAlertsBot.Helpers;
+using CryptoAlertsBot.RepetitiveTasks;
 using Discord;
 using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
 using GenericApiHandler;
 using GenericApiHandler.Authentication;
+using GenericApiHandler.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using System.Globalization;
 
@@ -46,6 +48,7 @@ public partial class Program
             await _services.GetRequiredService<ConstantsHandler>().InitializeAsync();
             await _services.GetRequiredService<CommandHandler>().InitializeAsync();
             _services.GetRequiredService<ClearPricesTable>().Initialize();
+            _services.GetRequiredService<DbBackup>().Initialize();
 
             await Task.Delay(-1);
         }
@@ -68,6 +71,8 @@ public partial class Program
             .AddSingleton<MostUsedApiCalls>()
             .AddSingleton<CommonFunctionality>()
             .AddSingleton<ClearPricesTable>()
+            .AddSingleton<DataBaseBackup>()
+            .AddSingleton<DbBackup>()
             .BuildServiceProvider();
     }
 

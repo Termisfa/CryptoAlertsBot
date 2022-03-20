@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CryptoAlertsBot.Models
+namespace CryptoAlertsBot.Models.PancakeSwap
 {
     public class DataInsideResult
     {

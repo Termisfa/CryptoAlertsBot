@@ -7,8 +7,9 @@ using CryptoAlertsBot.AlertsTypes;
 using Discord;
 using GenericApiHandler.Models;
 using System.Globalization;
+using CryptoAlertsBot.Models.PancakeSwap;
 
-namespace CryptoAlertsBot
+namespace CryptoAlertsBot.RepetitiveTasks
 {
     public class FillPricesDB
     {

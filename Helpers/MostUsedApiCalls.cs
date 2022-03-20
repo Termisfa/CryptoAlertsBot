@@ -3,6 +3,7 @@ using System.Text.Json;
 using CryptoAlertsBot.ApiHandler;
 using GenericApiHandler.Data.Enums;
 using GenericApiHandler.Models;
+using CryptoAlertsBot.Models.PancakeSwap;
 
 namespace CryptoAlertsBot
 {

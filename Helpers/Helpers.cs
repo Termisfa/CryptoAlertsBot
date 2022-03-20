@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Reflection;
 
 namespace CryptoAlertsBot.Helpers
 {
@@ -71,6 +72,20 @@ namespace CryptoAlertsBot.Helpers
                     default:
                         return true;
                 }
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
+        }
+
+        public static List<Type> GetTypesInNamespace(Assembly assembly, string nameSpace)
+        {
+            try
+            {
+                return assembly.GetTypes()
+                                .Where(t => String.Equals(t.Namespace, nameSpace, StringComparison.Ordinal))
+                                .ToList();
             }
             catch (Exception e)
             {
