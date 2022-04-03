@@ -28,9 +28,9 @@ namespace CryptoAlertsBot.Discord.Modules
         [SlashCommand("nuevaalerta", "Añade una nueva alerta")]
         public async Task NewAlert(
             [Summary("Canal", "Canal de la moneda. Ejemplo: #WBNB")][IsCoinChannel] SocketTextChannel coinChannel,
-            [Summary("Precio", "Precio en USD para la alerta. Ejemplo: 1.23")] string priceString,
+            [Summary("PrecioPorcentaje", "Si es precio, en USD. Ejemplo: 1.23. Si es porcentaje, debe terminar con %. Ejemplo: 10%")] string priceString,
             [Summary("Tipo", "Tipo de la alerta")] AlertsEnum alertType,
-            [Summary("Tiempo", "Tiempo mínimo entre alertas")] TimeEnum timeBetweenAlerts
+            [Summary("Tiempo", "Tiempo mínimo entre alertas. Si es porcentual, también será el tiempo que se usa para comparar")] TimeEnum timeBetweenAlerts
             )
         {
             try
@@ -45,9 +45,12 @@ namespace CryptoAlertsBot.Discord.Modules
                     return;
                 }
 
+                bool isPorcentual = AlertsHelper.IsPorcentual(priceString);
+                priceString = AlertsHelper.RemoveSymbolIfExists(priceString.Trim());
+
                 if (!double.TryParse(priceString.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out double price))
                 {
-                    await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = $"Error, el precio `{priceString}` no es válido"; });
+                    await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = $"Error, el número `{priceString}` no es válido"; });
                     return;
                 }
 
@@ -60,7 +63,7 @@ namespace CryptoAlertsBot.Discord.Modules
                     UserId = userId,
                     CoinAddress = coinAddress,
                     PriceUsd = price,
-                    AlertType = alertType.ToString(),
+                    AlertType = alertType.ToString() + (isPorcentual ? "%" : ""),
                     HoursBetweenAlerts = (int)timeBetweenAlerts
                 };
 
@@ -79,13 +82,16 @@ namespace CryptoAlertsBot.Discord.Modules
         [SlashCommand("borraralerta", "Elimina una alerta existente")]
         public async Task DeleteAlert(
             [Summary("Canal", "Canal de la moneda. Ejemplo: #WBNB")][IsCoinChannel] SocketTextChannel coinChannel,
-            [Summary("Precio", "Precio en USD para la alerta. Ejemplo: 1.23")] string priceString,
+            [Summary("PrecioPorcentaje", "Si es precio, en USD. Ejemplo: 1.23. Si es porcentaje, debe terminar con %. Ejemplo: 10%")] string priceString,
             [Summary("Tipo", "Tipo de la alerta")] AlertsEnum alertType
             )
         {
             try
             {
                 await DeferAsync();
+
+                bool isPorcentual = AlertsHelper.IsPorcentual(priceString);
+                priceString = AlertsHelper.RemoveSymbolIfExists(priceString.Trim());
 
                 if (!double.TryParse(priceString.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out double price))
                 {
@@ -97,7 +103,7 @@ namespace CryptoAlertsBot.Discord.Modules
 
                 string coinAddress = pinnedMessage.Replace(_constantsHandler.GetConstant(ConstantsNames.URL_POOCOIN), "");
 
-                int deletedRows = await _mostUsedApiCalls.DeleteAlert(Context.User.Id.ToString(), coinAddress, price.ToString(), alertType.ToString());
+                int deletedRows = await _mostUsedApiCalls.DeleteAlert(Context.User.Id.ToString(), coinAddress, price.ToString(), alertType.ToString() + (isPorcentual ? "%" : ""));
 
                 if (deletedRows == 0)
                 {
@@ -123,7 +129,9 @@ namespace CryptoAlertsBot.Discord.Modules
             {
                 await DeferAsync();
 
-                await ModifyOriginalResponseAsync(async (responseMsg) => { responseMsg.Content = await _commonFunctionality.GetAlertsMsg(Context); });
+                string msg = await _commonFunctionality.GetAlertsMsg(Context);
+
+                await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = msg; });
             }
             catch (Exception e)
             {

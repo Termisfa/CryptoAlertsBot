@@ -39,6 +39,7 @@ public partial class Program
             _client.Ready += ReadyAsync;
 
             string apiKey = Helpers.IsRelease() ? AppSettingsManager.GetDiscordBotKey() : AppSettingsManager.DiscordTestBotKey();
+            //string apiKey =  AppSettingsManager.GetDiscordBotKey();
             await _client.LoginAsync(TokenType.Bot, apiKey);
 
             await _client.StartAsync();
@@ -78,7 +79,7 @@ public partial class Program
 
     private async Task ReadyAsync()
     {
-        //if (IsDebug())
+        //if (!Helpers.IsRelease())
         //{
         //    await _commands.RegisterCommandsToGuildAsync(ulong.Parse(_services.GetRequiredService<ConstantsHandler>().GetConstant(ConstantsNames.SERVER_ID)));
         //}

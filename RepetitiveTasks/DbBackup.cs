@@ -50,7 +50,7 @@ namespace CryptoAlertsBot.RepetitiveTasks
 
                 using (var stream = GenerateStreamFromString(backupResult))
                 {
-                    await (dbBackupChannel as SocketTextChannel).SendFileAsync(stream, "testFileName.sql", "test");
+                    await (dbBackupChannel as SocketTextChannel).SendFileAsync(stream, $"CryptoAllertsBackup_{DateTime.Now.ToString("ddMMyyyy")}.sql", "");
                 }
             }
             catch (Exception e)

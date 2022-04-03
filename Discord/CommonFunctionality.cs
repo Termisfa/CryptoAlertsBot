@@ -72,10 +72,15 @@ namespace CryptoAlertsBot.Discord
                 {
                     foreach (AlertsCoins alertCoin in queryResult)
                     {
-                        msg += "Moneda: <#" + alertCoin.Coin.IdChannel
-                            + ">. PrecioUSD: `" + alertCoin.Alert.PriceUsd
-                            + "`. Tipo de alerta: `" + alertCoin.Alert.AlertType
-                            + "`. Tiempo entre alertas: `" + ((TimeEnum)alertCoin.Alert.HoursBetweenAlerts).ToString() + "`\n";
+                        bool isPorcentual = AlertsHelper.IsPorcentual(alertCoin.Alert.AlertType);
+                        string alertType = AlertsHelper.RemoveSymbolIfExists(alertCoin.Alert.AlertType);
+                        string priceOrPercent = isPorcentual ? "Porcentaje" : "PrecioUSD";
+                        string symbol = isPorcentual ? "%" : "USD";
+
+                        msg += $"Moneda: <#{alertCoin.Coin.IdChannel}>." 
+                            + $" {priceOrPercent}: `{alertCoin.Alert.PriceUsd}`{symbol}." 
+                            + $" Tipo de alerta: `{alertType}`." 
+                            + $" Tiempo entre alertas: `{((TimeEnum)alertCoin.Alert.HoursBetweenAlerts).ToString()}`\n";
                     }
                 }
 
