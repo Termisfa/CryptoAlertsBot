@@ -8,6 +8,7 @@ using Discord;
 using GenericApiHandler.Models;
 using System.Globalization;
 using CryptoAlertsBot.Models.PancakeSwap;
+using CryptoAlertsBot.Charts;
 
 namespace CryptoAlertsBot.RepetitiveTasks
 {
@@ -66,7 +67,7 @@ namespace CryptoAlertsBot.RepetitiveTasks
                 Thread.CurrentThread.CurrentCulture = culture;
                 Thread.CurrentThread.CurrentUICulture = culture;
 
-                ResultPancakeSwapApi coinInfo = await _mostUsedApiCalls.GetFromPancakeSwapApi(_constantsHandler.GetConstant(ConstantsNames.URL_API), coin.Address);
+                ResultPancakeSwapApi coinInfo = await _mostUsedApiCalls.GetFromPancakeSwapApi(await _constantsHandler.GetConstantAsync(ConstantsNames.URL_API), coin.Address);
 
                 Prices price = await UpdateDatabase(coin, coinInfo);
 
@@ -86,7 +87,8 @@ namespace CryptoAlertsBot.RepetitiveTasks
         {
             try
             {
-                var categoryChannelDb = _client.Guilds.First().CategoryChannels.First(w => w.Id == ulong.Parse(_constantsHandler.GetConstant(ConstantsNames.DB_CATEGORY_CHANNEL_ID)));
+                string dbCategoryChannelId = await _constantsHandler.GetConstantAsync(ConstantsNames.DB_CATEGORY_CHANNEL_ID);
+                var categoryChannelDb = _client.Guilds.First().CategoryChannels.First(w => w.Id == ulong.Parse(dbCategoryChannelId));
 
                 var coinChannel = categoryChannelDb.Channels.FirstOrDefault(w => w.Id == ulong.Parse(coin.IdChannel));
 
@@ -143,7 +145,13 @@ namespace CryptoAlertsBot.RepetitiveTasks
 
                     await resumeChannel.DeleteMessagesAsync(await resumeChannel.GetMessagesAsync().Flatten().Where(w => w.Content.Contains(coin.Name)).ToListAsync());
 
-                    _ = resumeChannel.SendMessageAsync(await _commonFunctionality.FormatPriceToResumeChannelAsync(coin, price, _constantsHandler.GetConstant(ConstantsNames.URL_POOCOIN)));
+                    List<HttpParameter> parameters = new();
+                    parameters.Add(HttpParameter.DefaultParameter("coinAddress", coin.Address));
+                    parameters.Add(HttpParameter.DefaultParameter("PriceDate", DateTime.Now.AddDays(-7), GenericApiHandler.Data.Enums.ComparatorsEnum.greaterOrEqualThan));
+                    var prices = await _buildAndExeApiCall.GetWithMultipleParameters<Prices>(parameters);
+
+                    Stream imageStream = ChartGenerator.GenerateChartImageFromPricesList(prices, coin.Name);
+                    _ = resumeChannel.SendFileAsync(imageStream, coin.Symbol + ".png", _commonFunctionality.FormatPriceToResumeChannel(coin, price, await _constantsHandler.GetConstantAsync(ConstantsNames.URL_POOCOIN)));
                 }
             }
             catch (Exception e)
@@ -220,7 +228,7 @@ namespace CryptoAlertsBot.RepetitiveTasks
             }
         }
 
-        private Task NotifyAlert(AlertsUsers alertUser, double price, string coinChannelId, bool isPorcentual)
+        private async Task NotifyAlert(AlertsUsers alertUser, double price, string coinChannelId, bool isPorcentual)
         {
             try
             {
@@ -236,7 +244,7 @@ namespace CryptoAlertsBot.RepetitiveTasks
                     throw new Exception($"El canal de alertas del usuario '{alertUser.User.Name}' no existe");
                 }
 
-                var priceLength = int.Parse(_constantsHandler.GetConstant(ConstantsNames.PRICE_LENGTH));
+                var priceLength = int.Parse(await _constantsHandler.GetConstantAsync(ConstantsNames.PRICE_LENGTH));
                 string trimmedPrice = price.ToString();
                 if (trimmedPrice.Length > priceLength)
                 {
@@ -249,12 +257,10 @@ namespace CryptoAlertsBot.RepetitiveTasks
                 string resultMsg = $"<@{alertUser.Alert.UserId}> La moneda {Helpers.Helpers.FormatChannelIdToDiscordFormat(coinChannelId)} ha {upOrDown} {staticOrPorcentual}. Está en  `{trimmedPrice}` USD";
 
                 _ = (alertsChannel as SocketTextChannel).SendMessageAsync(resultMsg);
-                return Task.CompletedTask;
             }
             catch (Exception e)
             {
                 _ = _logger.Log(exception: e);
-                return Task.CompletedTask;
             }
         }
     }

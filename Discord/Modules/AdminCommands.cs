@@ -54,7 +54,7 @@ namespace CryptoAlertsBot.Discord.Modules
         {
             try
             {
-                if (_constantsHandler.AddConstant(key, value))
+                if (await _constantsHandler.AddConstantAsync(key, value))
                     _ = ReplyAsync("Constante añadida con éxito");
                 else
                     _ = ReplyAsync("La constante ya existe");
@@ -72,7 +72,7 @@ namespace CryptoAlertsBot.Discord.Modules
         {
             try
             {
-                _ = ReplyAsync(_constantsHandler.ListConstants());
+                _ = ReplyAsync(await _constantsHandler.ListConstantsAsync());
             }
             catch (Exception e)
             {
@@ -105,7 +105,7 @@ namespace CryptoAlertsBot.Discord.Modules
         {
             try
             {
-                if (_constantsHandler.UpdateConstant(key, value))
+                if (await _constantsHandler.UpdateConstantAsync(key, value))
                     _ = ReplyAsync("Constante actualizada con éxito");
                 else
                     _ = ReplyAsync("La constante no existe");

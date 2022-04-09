@@ -1,7 +1,5 @@
 ﻿using CryptoAlertsBot.ApiHandler.Models;
-using Discord;
 using Discord.WebSocket;
-using System.Diagnostics;
 
 namespace CryptoAlertsBot
 {
@@ -49,7 +47,7 @@ namespace CryptoAlertsBot
                     _ = _logs.Dequeue();
                 }
 
-                string logChannelID = _constantsHandler.GetConstant(ConstantsNames.LOG_CHANNEL_ID);
+                string logChannelID = await _constantsHandler.GetConstantAsync(ConstantsNames.LOG_CHANNEL_ID);
                 if (!string.IsNullOrEmpty(logChannelID))
                 {
                     var logChannel = (SocketTextChannel)_client.GetChannel(ulong.Parse(logChannelID));

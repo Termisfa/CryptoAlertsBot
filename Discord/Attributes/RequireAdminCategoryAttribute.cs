@@ -16,7 +16,7 @@ namespace CryptoAlertsBot.Discord.Preconditions
 
                 if (context.User is SocketGuildUser gUser)
                 {
-                    string adminCategoryId = constantsHandler.GetConstant(ConstantsNames.ADMIN_CATEGORY_ID);
+                    string adminCategoryId = await constantsHandler.GetConstantAsync(ConstantsNames.ADMIN_CATEGORY_ID);
                     var adminCategory = (SocketCategoryChannel)(await context.Guild.GetCategoriesAsync())?.FirstOrDefault(w => w.Id.ToString() == adminCategoryId);
 
                     if ((bool)adminCategory?.Channels?.Any(channel => channel.Id == context.Channel.Id))

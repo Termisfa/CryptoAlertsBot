@@ -56,7 +56,7 @@ namespace CryptoAlertsBot.Discord.Modules
 
                 string pinnedMessage = (await coinChannel.GetPinnedMessagesAsync())?.FirstOrDefault()?.Content;
 
-                string coinAddress = pinnedMessage.Replace(_constantsHandler.GetConstant(ConstantsNames.URL_POOCOIN), "");
+                string coinAddress = pinnedMessage.Replace(await _constantsHandler.GetConstantAsync(ConstantsNames.URL_POOCOIN), "");
 
                 Alerts alert = new()
                 {
@@ -101,7 +101,7 @@ namespace CryptoAlertsBot.Discord.Modules
 
                 string pinnedMessage = (await coinChannel.GetPinnedMessagesAsync())?.FirstOrDefault()?.Content;
 
-                string coinAddress = pinnedMessage.Replace(_constantsHandler.GetConstant(ConstantsNames.URL_POOCOIN), "");
+                string coinAddress = pinnedMessage.Replace(await _constantsHandler.GetConstantAsync(ConstantsNames.URL_POOCOIN), "");
 
                 int deletedRows = await _mostUsedApiCalls.DeleteAlert(Context.User.Id.ToString(), coinAddress, price.ToString(), alertType.ToString() + (isPorcentual ? "%" : ""));
 

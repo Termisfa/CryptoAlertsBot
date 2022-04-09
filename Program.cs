@@ -1,5 +1,6 @@
 ﻿using CryptoAlertsBot;
 using CryptoAlertsBot.ApiHandler;
+using CryptoAlertsBot.Charts;
 using CryptoAlertsBot.Discord;
 using CryptoAlertsBot.Helpers;
 using CryptoAlertsBot.RepetitiveTasks;
@@ -15,7 +16,6 @@ using System.Globalization;
 
 public partial class Program
 {
-
     private DiscordSocketClient _client;
     private InteractionService _commands;
     private ServiceProvider _services;
@@ -39,7 +39,7 @@ public partial class Program
             _client.Ready += ReadyAsync;
 
             string apiKey = Helpers.IsRelease() ? AppSettingsManager.GetDiscordBotKey() : AppSettingsManager.DiscordTestBotKey();
-            //string apiKey =  AppSettingsManager.GetDiscordBotKey();
+            //string apiKey = AppSettingsManager.GetDiscordBotKey();
             await _client.LoginAsync(TokenType.Bot, apiKey);
 
             await _client.StartAsync();
@@ -79,14 +79,14 @@ public partial class Program
 
     private async Task ReadyAsync()
     {
-        //if (!Helpers.IsRelease())
+        //if (Helpers.IsRelease())
         //{
-        //    await _commands.RegisterCommandsToGuildAsync(ulong.Parse(_services.GetRequiredService<ConstantsHandler>().GetConstant(ConstantsNames.SERVER_ID)));
+        // this method will add commands globally, but can take around an hour
+        await _commands.RegisterCommandsGloballyAsync(true);
         //}
         //else
         //{
-        //    // this method will add commands globally, but can take around an hour
-        //    await _commands.RegisterCommandsGloballyAsync(true);
+        //    await _commands.RegisterCommandsToGuildAsync(ulong.Parse(_services.GetRequiredService<ConstantsHandler>().GetConstant(ConstantsNames.SERVER_ID)));
         //}
         Console.WriteLine($"Connected as -> [{_client.CurrentUser}] :)");
 

@@ -46,7 +46,7 @@ namespace CryptoAlertsBot.RepetitiveTasks
 
 
 
-                var dbBackupChannel = _client.Guilds.First().GetChannel(ulong.Parse(_constantsHandler.GetConstant(ConstantsNames.BACKUP_DB_CHANNEL_ID)));
+                var dbBackupChannel = _client.Guilds.First().GetChannel(ulong.Parse(await _constantsHandler.GetConstantAsync(ConstantsNames.BACKUP_DB_CHANNEL_ID)));
 
                 using (var stream = GenerateStreamFromString(backupResult))
                 {

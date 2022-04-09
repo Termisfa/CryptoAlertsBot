@@ -45,7 +45,7 @@ namespace CryptoAlertsBot.Discord.Modules
                     return;
                 }
 
-                string urlApi = _constantsHandler.GetConstant(ConstantsNames.URL_API);
+                string urlApi = await _constantsHandler.GetConstantAsync(ConstantsNames.URL_API);
                 ResultPancakeSwapApi coinInfo = await _mostUsedApiCalls.GetFromPancakeSwapApi(urlApi, coinAddress);
                 if (coinInfo == default)
                 {
@@ -53,10 +53,10 @@ namespace CryptoAlertsBot.Discord.Modules
                     return;
                 }
 
-                string dbCategoryChannelId = _constantsHandler.GetConstant(ConstantsNames.DB_CATEGORY_CHANNEL_ID);
+                string dbCategoryChannelId = await _constantsHandler.GetConstantAsync(ConstantsNames.DB_CATEGORY_CHANNEL_ID);
                 var coinChannel = await Context.Guild.CreateTextChannelAsync(coinInfo.Symbol, tcp => tcp.CategoryId = new Optional<ulong?>(ulong.Parse(dbCategoryChannelId)));
 
-                string urlPooCoin = _constantsHandler.GetConstant(ConstantsNames.URL_POOCOIN);
+                string urlPooCoin = await _constantsHandler.GetConstantAsync(ConstantsNames.URL_POOCOIN);
                 _ = (await coinChannel.SendMessageAsync(urlPooCoin + coinAddress)).PinAsync();
 
                 Coins coin = new()

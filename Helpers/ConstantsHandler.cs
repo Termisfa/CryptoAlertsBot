@@ -22,20 +22,22 @@ namespace CryptoAlertsBot
             }
             catch (Exception e)
             {
-                throw;
+                Console.WriteLine("Error in ConstantHandler.InitializeAsync: " + e.Message);
             }
         }
 
-        public string GetConstant(string constantName)
+        public async Task<string> GetConstantAsync(string constantName)
         {
             try
             {
+                await InitializeIfEmpty();
+
                 string result = constantsList.FirstOrDefault(constant => constant.Name.ToLower() == constantName.ToLower().Trim())?.Text;
                 return result;
             }
             catch (Exception e)
-            {
-                throw;
+            {               
+                return default;
             }
         }
 
@@ -43,6 +45,8 @@ namespace CryptoAlertsBot
         {
             try
             {
+                await InitializeIfEmpty();
+
                 int deletedRows = await _buildAndExeApiCall.DeleteWithOneParameter("constants", HttpParameter.DefaultParameter("name", constantName));
 
                 if (deletedRows > 0)
@@ -53,16 +57,18 @@ namespace CryptoAlertsBot
 
                 return false;
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                throw;
+                return default;
             }
         }
 
-        public bool UpdateConstant(string constantName, string value)
+        public async Task<bool> UpdateConstantAsync(string constantName, string value)
         {
             try
             {
+                await InitializeIfEmpty();
+
                 Constants constant = constantsList.FirstOrDefault(w => w.Name.ToLower() == constantName.ToLower().Trim());
 
                 if (constant == null)
@@ -76,14 +82,16 @@ namespace CryptoAlertsBot
             }
             catch (Exception e)
             {
-                throw;
+                return default;
             }
         }
 
-        public bool AddConstant(string constantName, string value)
+        public async Task<bool> AddConstantAsync(string constantName, string value)
         {
             try
             {
+                await InitializeIfEmpty();
+
                 Constants constant = constantsList.FirstOrDefault(w => w.Name.ToLower() == constantName.ToLower().Trim());
                 if (constant != null)
                     return false;
@@ -93,20 +101,39 @@ namespace CryptoAlertsBot
                 _ = _buildAndExeApiCall.Post("constants", constant);
                 return true;
             }
-            catch (Exception e) { throw; }
+            catch (Exception e)
+            {
+                return default;
+            }
         }
 
-        public string ListConstants()
+        public async Task<string> ListConstantsAsync()
         {
             try
             {
+                await InitializeIfEmpty();
                 string result = string.Empty;
                 constantsList.ForEach(constant => result += $"{constant.Name}: `{constant.Text}`\n");
                 result = result.Substring(0, result.Length - 1);
                 return result;
             }
-            catch (Exception e) { throw; }
+            catch (Exception e)
+            {
+                return default;
+            }
         }
 
+        private async Task InitializeIfEmpty()
+        {
+            try
+            {
+                if (constantsList == default)
+                    await this.InitializeAsync();
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
+        }
     }
 }

@@ -100,22 +100,22 @@ namespace CryptoAlertsBot.Discord
                 if (previousPrice != null)
                     emote = price.PriceUsd > previousPrice.PriceUsd ? ":point_up_2:" : ":point_down:";
                 string result = new string('-', 60) + "\n";
-                result += $"Actualizado: `{price.PriceDate.Value.ToString("dd MMM yyyy HH:mm:ss")}`\n";
+                result += $"Actualizado: `{price.PriceDate.Value.ToString("dd MMM yyyy HH:mm:ss")} UTC TIME`\n";
                 result += $" {emote} Precio USD: {await GetRoundedPriceAsync(price.PriceUsd)}";
                 return result;
             }
             catch (Exception e) { throw; }
         }
 
-        public async Task<string> FormatPriceToResumeChannelAsync(Coins coin, Prices price, string urlPooCoin)
+        public string FormatPriceToResumeChannel(Coins coin, Prices price, string urlPooCoin)
         {
             try
             {
                 string result = new string('-', 60) + "\n";
                 result += $"Nombre: `{coin.Name}`\n";
-                result += $"Símbolo: `{coin.Symbol}`\n";
+                //result += $"Símbolo: `{coin.Symbol}`\n";
                 result += $"Canal: {Helpers.Helpers.FormatChannelIdToDiscordFormat(coin.IdChannel)}\n";
-                result += $"Actualizado: `{price.PriceDate.Value.ToString("dd MMM yyyy HH:mm:ss")}`\n";
+                result += $"Actualizado: `{price.PriceDate.Value.ToString("dd MMM yyyy HH:mm:ss")}` UTC TIME\n";
                 result += $"Precio USD: `{price.PriceUsd}`\n";
                 result += urlPooCoin + coin.Address;
                 return result;
