@@ -48,8 +48,6 @@ public partial class Program
             await _services.GetRequiredService<AuthToken>().InitializeAsync();
             await _services.GetRequiredService<ConstantsHandler>().InitializeAsync();
             await _services.GetRequiredService<CommandHandler>().InitializeAsync();
-            _services.GetRequiredService<ClearPricesTable>().Initialize();
-            _services.GetRequiredService<DbBackup>().Initialize();
 
             await Task.Delay(-1);
         }
@@ -72,8 +70,8 @@ public partial class Program
             .AddSingleton<MostUsedApiCalls>()
             .AddSingleton<CommonFunctionality>()
             .AddSingleton<ClearPricesTable>()
-            .AddSingleton<DataBaseBackup>()
-            .AddSingleton<DbBackup>()
+            .AddSingleton<DbBackupExecute>()
+            .AddSingleton<DbBackupPrepare>()
             .BuildServiceProvider();
     }
 
@@ -91,6 +89,8 @@ public partial class Program
         Console.WriteLine($"Connected as -> [{_client.CurrentUser}] :)");
 
         _services.GetRequiredService<FillPricesDB>().Initialize();
+        _services.GetRequiredService<ClearPricesTable>().Initialize();
+        _services.GetRequiredService<DbBackupPrepare>().Initialize();
     }
 
     private async Task LogAsync(LogMessage log)

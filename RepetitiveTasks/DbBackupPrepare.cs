@@ -7,14 +7,14 @@ using System.Text;
 
 namespace CryptoAlertsBot.RepetitiveTasks
 {
-    public class DbBackup
+    public class DbBackupPrepare
     {
         private readonly Logger _logger;
-        private readonly DataBaseBackup _dataBaseBackup;
+        private readonly DbBackupExecute _dataBaseBackup;
         private readonly ConstantsHandler _constantsHandler;
         private readonly DiscordSocketClient _client;
 
-        public DbBackup(Logger logger, DataBaseBackup dataBaseBackup, ConstantsHandler constantsHandler, DiscordSocketClient client)
+        public DbBackupPrepare(Logger logger, DbBackupExecute dataBaseBackup, ConstantsHandler constantsHandler, DiscordSocketClient client)
         {
             _logger = logger;
             _dataBaseBackup = dataBaseBackup;
@@ -43,8 +43,6 @@ namespace CryptoAlertsBot.RepetitiveTasks
                 List<Type> tableTypes = Helpers.Helpers.GetTypesInNamespace(Assembly.GetExecutingAssembly(), "CryptoAlertsBot.Models");
 
                 string backupResult = await _dataBaseBackup.GetDataBaseBackup(tableTypes);
-
-
 
                 var dbBackupChannel = _client.Guilds.First().GetChannel(ulong.Parse(await _constantsHandler.GetConstantAsync(ConstantsNames.BACKUP_DB_CHANNEL_ID)));
 
