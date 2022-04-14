@@ -8,7 +8,7 @@ namespace CryptoAlertsBot
         private readonly DiscordSocketClient _client;
         private readonly ConstantsHandler _constantsHandler;
 
-        private Queue<string> _logs;
+        private readonly Queue<string> _logs;
         private const int QUEUE_SIZE = 10;
 
         public Logger(DiscordSocketClient client, ConstantsHandler constantsHandler)

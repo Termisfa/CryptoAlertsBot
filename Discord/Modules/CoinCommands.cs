@@ -7,7 +7,6 @@ using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using GenericApiHandler.Models;
-using static CryptoAlertsBot.Helpers.Helpers;
 
 namespace CryptoAlertsBot.Discord.Modules
 {

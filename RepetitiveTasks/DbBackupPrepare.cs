@@ -4,6 +4,7 @@ using CryptoAlertsBot.Discord;
 using System.Reflection;
 using GenericApiHandler.Helpers;
 using System.Text;
+using CryptoAlertsBot.Helpers;
 
 namespace CryptoAlertsBot.RepetitiveTasks
 {
@@ -40,16 +41,14 @@ namespace CryptoAlertsBot.RepetitiveTasks
         {
             try
             {
-                List<Type> tableTypes = Helpers.Helpers.GetTypesInNamespace(Assembly.GetExecutingAssembly(), "CryptoAlertsBot.Models");
+                List<Type> tableTypes = GenericHelpers.GetTypesInNamespace(Assembly.GetExecutingAssembly(), "CryptoAlertsBot.Models");
 
                 string backupResult = await _dataBaseBackup.GetDataBaseBackup(tableTypes);
 
                 var dbBackupChannel = _client.Guilds.First().GetChannel(ulong.Parse(await _constantsHandler.GetConstantAsync(ConstantsNames.BACKUP_DB_CHANNEL_ID)));
 
-                using (var stream = GenerateStreamFromString(backupResult))
-                {
-                    await (dbBackupChannel as SocketTextChannel).SendFileAsync(stream, $"CryptoAllertsBackup_{DateTime.Now.ToString("ddMMyyyy")}.sql", "");
-                }
+                using var stream = GenerateStreamFromString(backupResult);
+                await (dbBackupChannel as SocketTextChannel).SendFileAsync(stream, $"CryptoAllertsBackup_{DateTime.Now:ddMMyyyy}.sql", "");
             }
             catch (Exception e)
             {

@@ -8,7 +8,7 @@ namespace CryptoAlertsBot.Models.PancakeSwap
 {
     public class ResultPancakeSwapApiPreParsed
     {
-        public long updated_at { get; set; }
-        public DataInsideResult data { get; set; }
+        public long Updated_at { get; set; }
+        public DataInsideResult Data { get; set; }
     }
 }

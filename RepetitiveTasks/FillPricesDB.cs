@@ -9,6 +9,7 @@ using GenericApiHandler.Models;
 using System.Globalization;
 using CryptoAlertsBot.Models.PancakeSwap;
 using CryptoAlertsBot.Charts;
+using CryptoAlertsBot.Helpers;
 
 namespace CryptoAlertsBot.RepetitiveTasks
 {
@@ -63,7 +64,7 @@ namespace CryptoAlertsBot.RepetitiveTasks
         {
             try
             {
-                CultureInfo culture = new CultureInfo("es-ES");
+                CultureInfo culture = new("es-ES");
                 Thread.CurrentThread.CurrentCulture = culture;
                 Thread.CurrentThread.CurrentUICulture = culture;
 
@@ -151,7 +152,7 @@ namespace CryptoAlertsBot.RepetitiveTasks
                     var prices = await _buildAndExeApiCall.GetWithMultipleParameters<Prices>(parameters);
 
                     Stream imageStream = ChartGenerator.GenerateChartImageFromPricesList(prices, coin.Name);
-                    _ = resumeChannel.SendFileAsync(imageStream, coin.Symbol + ".png", _commonFunctionality.FormatPriceToResumeChannel(coin, price, await _constantsHandler.GetConstantAsync(ConstantsNames.URL_POOCOIN)));
+                    _ = resumeChannel.SendFileAsync(imageStream, coin.Symbol + ".png", CommonFunctionality.FormatPriceToResumeChannel(coin, price, await _constantsHandler.GetConstantAsync(ConstantsNames.URL_POOCOIN)));
                 }
             }
             catch (Exception e)
@@ -191,7 +192,7 @@ namespace CryptoAlertsBot.RepetitiveTasks
                             double oldValueToCompare = oldPrice.PriceUsd;
                             var oldPriceWithPorcentualChange = oldValueToCompare * (1 + (alertUser.Alert.PriceUsd / 100 * AlertsHelper.GetAlertMultiplier(alertType)));
 
-                            if (Helpers.Helpers.IsGreaterOrLesserHandler(AlertsHelper.GetAlertSign(alertType), price, oldPriceWithPorcentualChange)
+                            if (GenericHelpers.IsGreaterOrLesserHandler(AlertsHelper.GetAlertSign(alertType), price, oldPriceWithPorcentualChange)
                                 && ((alertUser.Alert.LastAlert == null || (DateTime.Now - alertUser.Alert.LastAlert.Value).TotalHours > alertsCooldown)))
                             {
                                 _ = NotifyAlert(alertUser, price, coin.IdChannel, isPorcentual);
@@ -199,7 +200,7 @@ namespace CryptoAlertsBot.RepetitiveTasks
                             }
                         }
                     }
-                    else if (Helpers.Helpers.IsGreaterOrLesserHandler(AlertsHelper.GetAlertSign(alertType), price, alertUser.Alert.PriceUsd))
+                    else if (GenericHelpers.IsGreaterOrLesserHandler(AlertsHelper.GetAlertSign(alertType), price, alertUser.Alert.PriceUsd))
                     {
                         if (alertUser.Alert.LastAlert == null)
                         {
@@ -211,7 +212,7 @@ namespace CryptoAlertsBot.RepetitiveTasks
 
                             foreach (var priceRow in prices)
                             {
-                                if (Helpers.Helpers.IsGreaterOrLesserHandler(AlertsHelper.GetAlertSign(alertType), alertUser.Alert.PriceUsd, priceRow.PriceUsd))
+                                if (GenericHelpers.IsGreaterOrLesserHandler(AlertsHelper.GetAlertSign(alertType), alertUser.Alert.PriceUsd, priceRow.PriceUsd))
                                 {
                                     await NotifyAlert(alertUser, price, coin.IdChannel, isPorcentual);
                                     break;
@@ -254,7 +255,7 @@ namespace CryptoAlertsBot.RepetitiveTasks
                 string upOrDown = alertUser.Alert.AlertType == AlertsEnum.Sube.ToString() ? "subido" : "bajado";
                 string staticOrPorcentual = isPorcentual ? $"un {alertUser.Alert.PriceUsd}% en {alertUser.Alert.HoursBetweenAlerts} horas" : $"de `{alertUser.Alert.PriceUsd}` USD";
 
-                string resultMsg = $"<@{alertUser.Alert.UserId}> La moneda {Helpers.Helpers.FormatChannelIdToDiscordFormat(coinChannelId)} ha {upOrDown} {staticOrPorcentual}. Está en  `{trimmedPrice}` USD";
+                string resultMsg = $"<@{alertUser.Alert.UserId}> La moneda {GenericHelpers.FormatChannelIdToDiscordFormat(coinChannelId)} ha {upOrDown} {staticOrPorcentual}. Está en  `{trimmedPrice}` USD";
 
                 _ = (alertsChannel as SocketTextChannel).SendMessageAsync(resultMsg);
             }

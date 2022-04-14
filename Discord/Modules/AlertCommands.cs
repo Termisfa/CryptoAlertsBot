@@ -70,12 +70,12 @@ namespace CryptoAlertsBot.Discord.Modules
                 _ = await _buildAndExeApiCall.Post("alerts", alert);
 
                 await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = "Alerta añadida con éxito"; });
-                _commonFunctionality.UpdateAlertsResume(Context);
+                await _commonFunctionality.UpdateAlertsResume(Context);
             }
             catch (Exception e)
             {
                 await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = "Ha ocurrido un error"; });
-                _ = _logger.Log(exception: e);
+                await _logger.Log(exception: e);
             }
         }
 
@@ -118,7 +118,7 @@ namespace CryptoAlertsBot.Discord.Modules
             catch (Exception e)
             {
                 await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = "Ha ocurrido un error"; });
-                _ = _logger.Log(exception: e);
+                await _logger.Log(exception: e);
             }
         }
 
@@ -136,7 +136,7 @@ namespace CryptoAlertsBot.Discord.Modules
             catch (Exception e)
             {
                 await ModifyOriginalResponseAsync((responseMsg) => { responseMsg.Content = "Ha ocurrido un error"; });
-                _ = _logger.Log(exception: e);
+                await _logger.Log(exception: e);
             }
         }
     }

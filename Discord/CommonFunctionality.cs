@@ -1,5 +1,6 @@
 ﻿using CryptoAlertsBot.AlertsTypes;
 using CryptoAlertsBot.ApiHandler;
+using CryptoAlertsBot.Helpers;
 using CryptoAlertsBot.Models;
 using CryptoAlertsBot.Models.MergedModels;
 using Discord.Interactions;
@@ -80,7 +81,7 @@ namespace CryptoAlertsBot.Discord
                         msg += $"Moneda: <#{alertCoin.Coin.IdChannel}>." 
                             + $" {priceOrPercent}: `{alertCoin.Alert.PriceUsd}`{symbol}." 
                             + $" Tipo de alerta: `{alertType}`." 
-                            + $" Tiempo entre alertas: `{((TimeEnum)alertCoin.Alert.HoursBetweenAlerts).ToString()}`\n";
+                            + $" Tiempo entre alertas: `{(TimeEnum)alertCoin.Alert.HoursBetweenAlerts}`\n";
                     }
                 }
 
@@ -100,22 +101,22 @@ namespace CryptoAlertsBot.Discord
                 if (previousPrice != null)
                     emote = price.PriceUsd > previousPrice.PriceUsd ? ":point_up_2:" : ":point_down:";
                 string result = new string('-', 60) + "\n";
-                result += $"Actualizado: `{price.PriceDate.Value.ToString("dd MMM yyyy HH:mm:ss")} UTC TIME`\n";
+                result += $"Actualizado: `{price.PriceDate.Value:dd MMM yyyy HH:mm:ss} UTC TIME`\n";
                 result += $" {emote} Precio USD: {await GetRoundedPriceAsync(price.PriceUsd)}";
                 return result;
             }
             catch (Exception e) { throw; }
         }
 
-        public string FormatPriceToResumeChannel(Coins coin, Prices price, string urlPooCoin)
+        public static string FormatPriceToResumeChannel(Coins coin, Prices price, string urlPooCoin)
         {
             try
             {
                 string result = new string('-', 60) + "\n";
                 result += $"Nombre: `{coin.Name}`\n";
                 //result += $"Símbolo: `{coin.Symbol}`\n";
-                result += $"Canal: {Helpers.Helpers.FormatChannelIdToDiscordFormat(coin.IdChannel)}\n";
-                result += $"Actualizado: `{price.PriceDate.Value.ToString("dd MMM yyyy HH:mm:ss")}` UTC TIME\n";
+                result += $"Canal: {GenericHelpers.FormatChannelIdToDiscordFormat(coin.IdChannel)}\n";
+                result += $"Actualizado: `{price.PriceDate.Value:dd MMM yyyy HH:mm:ss}` UTC TIME\n";
                 result += $"Precio USD: `{price.PriceUsd}`\n";
                 result += urlPooCoin + coin.Address;
                 return result;

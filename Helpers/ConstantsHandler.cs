@@ -51,7 +51,7 @@ namespace CryptoAlertsBot
 
                 if (deletedRows > 0)
                 {
-                    InitializeAsync();
+                    await InitializeAsync();
                     return true;
                 }
 

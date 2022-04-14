@@ -1,6 +1,4 @@
-﻿using CryptoAlertsBot;
-using CryptoAlertsBot.ApiHandler;
-using CryptoAlertsBot.Charts;
+﻿using CryptoAlertsBot.ApiHandler;
 using CryptoAlertsBot.Discord;
 using CryptoAlertsBot.Helpers;
 using CryptoAlertsBot.RepetitiveTasks;
@@ -14,92 +12,95 @@ using GenericApiHandler.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using System.Globalization;
 
-public partial class Program
+namespace CryptoAlertsBot
 {
-    private DiscordSocketClient _client;
-    private InteractionService _commands;
-    private ServiceProvider _services;
-    public static Task Main(string[] args) => new Program().MainAsync();
-
-    public async Task MainAsync(string[] args) { }
-
-    private async Task MainAsync()
+    public partial class Program
     {
-        CultureInfo culture = new CultureInfo("es-ES");
-        Thread.CurrentThread.CurrentCulture = culture;
-        Thread.CurrentThread.CurrentUICulture = culture;
+        private DiscordSocketClient _client;
+        private InteractionService _commands;
+        private ServiceProvider _services;
+        public static Task Main(string[] args) => new Program().MainAsync();
 
-        using (_services = ConfigureServices())
+        public static Task MainAsync(string[] args)
         {
-            _client = _services.GetRequiredService<DiscordSocketClient>();
-            _commands = _services.GetRequiredService<InteractionService>();
+            return Task.CompletedTask;
+        }
 
-            _client.Log += LogAsync;
-            _commands.Log += LogAsync;
-            _client.Ready += ReadyAsync;
+        private async Task MainAsync()
+        {
+            CultureInfo culture = new("es-ES");
+            CultureInfo.CurrentCulture = culture;
+            CultureInfo.CurrentUICulture = culture;
+            Thread.CurrentThread.CurrentCulture = culture;
+            Thread.CurrentThread.CurrentUICulture = culture;
 
-            string apiKey = Helpers.IsRelease() ? AppSettingsManager.GetDiscordBotKey() : AppSettingsManager.DiscordTestBotKey();
-            //string apiKey = AppSettingsManager.GetDiscordBotKey();
-            await _client.LoginAsync(TokenType.Bot, apiKey);
+            using (_services = ConfigureServices())
+            {
+                _client = _services.GetRequiredService<DiscordSocketClient>();
+                _commands = _services.GetRequiredService<InteractionService>();
 
-            await _client.StartAsync();
+                _client.Log += LogAsync;
+                _commands.Log += LogAsync;
+                _client.Ready += ReadyAsync;
 
-            _services.GetRequiredService<LoggerEventListener>().Initialize();
-            await _services.GetRequiredService<AuthToken>().InitializeAsync();
-            await _services.GetRequiredService<ConstantsHandler>().InitializeAsync();
-            await _services.GetRequiredService<CommandHandler>().InitializeAsync();
+                string apiKey = GenericHelpers.IsRelease() ? AppSettingsManager.GetDiscordBotKey() : AppSettingsManager.DiscordTestBotKey();
+                //string apiKey = AppSettingsManager.GetDiscordBotKey();
+                await _client.LoginAsync(TokenType.Bot, apiKey);
 
-            await Task.Delay(-1);
+                await _client.StartAsync();
+
+                _services.GetRequiredService<LoggerEventListener>().Initialize();
+                await _services.GetRequiredService<AuthToken>().InitializeAsync();
+                await _services.GetRequiredService<ConstantsHandler>().InitializeAsync();
+                await _services.GetRequiredService<CommandHandler>().InitializeAsync();
+
+                await Task.Delay(-1);
+            }
+        }
+
+        private ServiceProvider ConfigureServices()
+        {
+            return new ServiceCollection()
+                .AddSingleton<LogEvent>()
+                .AddSingleton<AuthToken>()
+                .AddSingleton<DiscordSocketClient>()
+                .AddSingleton<Logger>()
+                .AddSingleton<LoggerEventListener>()
+                .AddSingleton<BuildAndExeApiCall>()
+                .AddSingleton<ConstantsHandler>()
+                .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
+                .AddSingleton<CommandService>()
+                .AddSingleton<CommandHandler>()
+                .AddSingleton<FillPricesDB>()
+                .AddSingleton<MostUsedApiCalls>()
+                .AddSingleton<CommonFunctionality>()
+                .AddSingleton<ClearPricesTable>()
+                .AddSingleton<DbBackupExecute>()
+                .AddSingleton<DbBackupPrepare>()
+                .BuildServiceProvider();
+        }
+
+        private async Task ReadyAsync()
+        {
+            //if (Helpers.IsRelease())
+            //{
+            // this method will add commands globally, but can take around an hour
+            await _commands.RegisterCommandsGloballyAsync(true);
+            //}
+            //else
+            //{
+            //    await _commands.RegisterCommandsToGuildAsync(ulong.Parse(_services.GetRequiredService<ConstantsHandler>().GetConstant(ConstantsNames.SERVER_ID)));
+            //}
+            Console.WriteLine($"Connected as -> [{_client.CurrentUser}] :)");
+
+            _services.GetRequiredService<FillPricesDB>().Initialize();
+            _services.GetRequiredService<ClearPricesTable>().Initialize();
+            _services.GetRequiredService<DbBackupPrepare>().Initialize();
+        }
+
+        private async Task LogAsync(LogMessage log)
+        {
+            await _services.GetRequiredService<Logger>().Log(log.ToString());
         }
     }
-
-    private ServiceProvider ConfigureServices()
-    {
-        return new ServiceCollection()
-            .AddSingleton<LogEvent>()
-            .AddSingleton<AuthToken>()
-            .AddSingleton<DiscordSocketClient>()
-            .AddSingleton<Logger>()
-            .AddSingleton<LoggerEventListener>()
-            .AddSingleton<BuildAndExeApiCall>()
-            .AddSingleton<ConstantsHandler>()
-            .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
-            .AddSingleton<CommandService>()
-            .AddSingleton<CommandHandler>()
-            .AddSingleton<FillPricesDB>()
-            .AddSingleton<MostUsedApiCalls>()
-            .AddSingleton<CommonFunctionality>()
-            .AddSingleton<ClearPricesTable>()
-            .AddSingleton<DbBackupExecute>()
-            .AddSingleton<DbBackupPrepare>()
-            .BuildServiceProvider();
-    }
-
-    private async Task ReadyAsync()
-    {
-        //if (Helpers.IsRelease())
-        //{
-        // this method will add commands globally, but can take around an hour
-        await _commands.RegisterCommandsGloballyAsync(true);
-        //}
-        //else
-        //{
-        //    await _commands.RegisterCommandsToGuildAsync(ulong.Parse(_services.GetRequiredService<ConstantsHandler>().GetConstant(ConstantsNames.SERVER_ID)));
-        //}
-        Console.WriteLine($"Connected as -> [{_client.CurrentUser}] :)");
-
-        _services.GetRequiredService<FillPricesDB>().Initialize();
-        _services.GetRequiredService<ClearPricesTable>().Initialize();
-        _services.GetRequiredService<DbBackupPrepare>().Initialize();
-    }
-
-    private async Task LogAsync(LogMessage log)
-    {
-        await _services.GetRequiredService<Logger>().Log(log.ToString());
-    }
 }
-
-
-
-
-

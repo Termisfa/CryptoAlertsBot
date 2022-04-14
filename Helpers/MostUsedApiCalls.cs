@@ -4,16 +4,19 @@ using CryptoAlertsBot.ApiHandler;
 using GenericApiHandler.Data.Enums;
 using GenericApiHandler.Models;
 using CryptoAlertsBot.Models.PancakeSwap;
+using CryptoAlertsBot.Helpers;
 
 namespace CryptoAlertsBot
 {
     public class MostUsedApiCalls
     {
         private readonly BuildAndExeApiCall _buildAndExeApiCall;
+        private readonly Logger _logger;
 
-        public MostUsedApiCalls(BuildAndExeApiCall buildAndExeApiCall)
+        public MostUsedApiCalls(BuildAndExeApiCall buildAndExeApiCall, Logger logger)
         {
             _buildAndExeApiCall = buildAndExeApiCall;
+            _logger = logger;
         }
 
         public async Task<Users> GetUserById(string userId)
@@ -102,11 +105,22 @@ namespace CryptoAlertsBot
             {
                 var httpResponse = await ApiCalls.ExeCall(ApiCallTypesEnum.Get, coin, baseAddress: baseAddress);
                 if (!httpResponse.IsSuccessStatusCode)
+                {
+                     _= _logger.Log($"Error in GetFromPancakeSwapApi. URL used: {baseAddress}{coin}. Error: { httpResponse.ReasonPhrase}");
                     return default;
+                }
+
                 string httpResponseMessage = await httpResponse.Content.ReadAsStringAsync();
-                ResultPancakeSwapApiPreParsed resultPancakeSwapApiPreParsed = JsonSerializer.Deserialize<ResultPancakeSwapApiPreParsed>(httpResponseMessage);
+                ResultPancakeSwapApiPreParsed resultPancakeSwapApiPreParsed = JsonSerializer.Deserialize<ResultPancakeSwapApiPreParsed>(httpResponseMessage, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 int priceLength = int.Parse(await GetConstantTextByName(ConstantsNames.PRICE_LENGTH));
-                ResultPancakeSwapApi result = new ResultPancakeSwapApi() { Updated_at = Helpers.Helpers.UnixTimeStampToDateTime(resultPancakeSwapApiPreParsed.updated_at), Name = resultPancakeSwapApiPreParsed.data.name, Symbol = resultPancakeSwapApiPreParsed.data.symbol, Price = Helpers.Helpers.StringPriceToDouble(resultPancakeSwapApiPreParsed.data.price, priceLength), Price_BNB = Helpers.Helpers.StringPriceToDouble(resultPancakeSwapApiPreParsed.data.price_BNB, priceLength + 3) };
+                ResultPancakeSwapApi result = new()
+                {
+                    Updated_at = GenericHelpers.UnixTimeStampToDateTime(resultPancakeSwapApiPreParsed.Updated_at),
+                    Name = resultPancakeSwapApiPreParsed.Data.Name,
+                    Symbol = resultPancakeSwapApiPreParsed.Data.Symbol,
+                    Price = GenericHelpers.StringPriceToDouble(resultPancakeSwapApiPreParsed.Data.Price, priceLength),
+                    Price_BNB = GenericHelpers.StringPriceToDouble(resultPancakeSwapApiPreParsed.Data.Price_BNB, priceLength + 3)
+                };
                 return result;
             }
             catch (Exception e) { throw; }

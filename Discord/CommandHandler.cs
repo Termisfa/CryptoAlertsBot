@@ -3,6 +3,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using System.Reflection;
 using Discord.Commands;
+using CryptoAlertsBot.Helpers;
 
 namespace CryptoAlertsBot.Discord
 {
@@ -58,17 +59,16 @@ namespace CryptoAlertsBot.Discord
             //To remove pinned messages notifications
             if (messageParam.Type == MessageType.ChannelPinnedMessage)
             {
-                messageParam.DeleteAsync();
+                await messageParam.DeleteAsync();
                 return;
             }
 
             // Don't process the command if it was a system message
-            var message = messageParam as SocketUserMessage;
-            if (message == null) return;
+            if (messageParam is not SocketUserMessage message) return;
 
             int argPos = 0;
 
-            char botPrefix = Helpers.Helpers.IsRelease() ? '!' : '%';
+            char botPrefix = GenericHelpers.IsRelease() ? '!' : '%';
 
             if (!(message.HasCharPrefix(botPrefix, ref argPos) ||
                 message.HasMentionPrefix(_client.CurrentUser, ref argPos)) ||
@@ -93,28 +93,16 @@ namespace CryptoAlertsBot.Discord
             await CommandExecutedAsync(context, result);
         }
 
-        private async Task CommandExecutedAsync(dynamic context, dynamic result)
+        private static async Task CommandExecutedAsync(dynamic context, dynamic result)
         {
             if (!result.IsSuccess)
             {
-                string errorMsg;
-                switch (result.Error)
+                string errorMsg = (dynamic)result.Error switch
                 {
-                    case CommandError.UnknownCommand:
-                    case InteractionCommandError.UnknownCommand:
-                        errorMsg = "Ese comando no existe";
-                        break;
-
-                    case CommandError.BadArgCount:
-                    case InteractionCommandError.BadArgs:
-                        errorMsg = "Número erróneo de parámetros";
-                        break;
-
-                    default:
-                        errorMsg = result.ErrorReason;
-                        break;
-                }
-
+                    CommandError.UnknownCommand or InteractionCommandError.UnknownCommand => "Ese comando no existe",
+                    CommandError.BadArgCount or InteractionCommandError.BadArgs => "Número erróneo de parámetros",
+                    _ => result.ErrorReason,
+                };
                 _ = await context.Channel.SendMessageAsync(errorMsg);
             }
         }

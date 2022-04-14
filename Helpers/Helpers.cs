@@ -3,13 +3,13 @@ using System.Reflection;
 
 namespace CryptoAlertsBot.Helpers
 {
-    public static class Helpers
+    public static class GenericHelpers
     {
         public static DateTime UnixTimeStampToDateTime(long unixTimeStamp)
         {
             try
             {
-                DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Local);
+                DateTime dateTime = new(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Local);
                 dateTime = dateTime.AddSeconds(unixTimeStamp / 1000);
                 return dateTime;
             }
@@ -60,18 +60,16 @@ namespace CryptoAlertsBot.Helpers
         {
             try
             {
-                switch (option)
+                return option switch
                 {
-                    case ">": return amount1 > amount2;
-                    case ">=": return amount1 >= amount2;
-                    case "=": return amount1 == amount2;
-                    case "!=": return amount1 != amount2;
-                    case "<": return amount1 < amount2;
-                    case "<=": return amount1 <= amount2;
-
-                    default:
-                        return true;
-                }
+                    ">" => amount1 > amount2,
+                    ">=" => amount1 >= amount2,
+                    "=" => amount1 == amount2,
+                    "!=" => amount1 != amount2,
+                    "<" => amount1 < amount2,
+                    "<=" => amount1 <= amount2,
+                    _ => true,
+                };
             }
             catch (Exception e)
             {

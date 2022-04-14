@@ -1,12 +1,12 @@
 ﻿using CryptoAlertsBot.AlertsTypes;
 using CryptoAlertsBot.ApiHandler;
 using CryptoAlertsBot.Discord.Preconditions;
+using CryptoAlertsBot.Helpers;
 using CryptoAlertsBot.Models;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using GenericApiHandler.Models;
-using static CryptoAlertsBot.Helpers.Helpers;
 
 namespace CryptoAlertsBot.Discord.Modules
 {
@@ -123,7 +123,7 @@ namespace CryptoAlertsBot.Discord.Modules
         {
             try
             {
-                string userId = Helpers.Helpers.FormatUserIdToNumberFormat(user);
+                string userId = GenericHelpers.FormatUserIdToNumberFormat(user);
                 Users userInfo = await _mostUsedApiCalls.GetUserById(userId);
 
                 if (userInfo == null)

@@ -8,9 +8,9 @@ namespace CryptoAlertsBot.Models.PancakeSwap
 {
     public class DataInsideResult
     {
-        public string name { get; set; }
-        public string symbol { get; set; }
-        public string price { get; set; }
-        public string price_BNB { get; set; }
+        public string Name { get; set; }
+        public string Symbol { get; set; }
+        public string Price { get; set; }
+        public string Price_BNB { get; set; }
     }
 }
